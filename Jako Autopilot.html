@@ -1,0 +1,1039 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Jako Autopilot</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Heebo:wght@400;500;600;700&family=Caveat:wght@500;600&display=swap">
+<style>
+/* Layout: app shell (sidebar + top bar) around white product cards, mirroring the reference product screens:
+   Email inbox, Order Details with extracted fields and source document, AI confidence panel, Autopilot Cockpit.
+   Single light theme by request. Logical properties so the whole shell mirrors for Hebrew (RTL). */
+:root{
+  --bg:#F5F5F3; --card:#FFFFFF; --card-2:#F9FAFB; --paper:#FFFDF6;
+  --ink:#111827; --ink-2:#374151; --muted:#6B7280; --faint:#9CA3AF; --line:#E5E7EB; --line-2:#F1F2F4;
+  --primary:#20674F; --primary-deep:#154635; --primary-soft:#E6F0EB; --primary-text:#1B5A45;
+  --green:#16A34A; --green-text:#15803D; --green-soft:#DCFCE7; --green-tint:#F0FDF4; --green-line:#86EFAC;
+  --amber:#B45309; --amber-soft:#FEF3C7; --rose:#BE123C; --rose-soft:#FFE4E6; --slate:#475569; --slate-soft:#E2E8F0;
+  --hand:#2A2A2A;
+  --shadow:0 1px 2px rgba(17,24,39,.05),0 8px 24px -16px rgba(17,24,39,.25);
+  --pop-shadow:0 12px 32px -12px rgba(17,24,39,.3),0 2px 6px rgba(17,24,39,.08);
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --hand-font:"Caveat","Segoe Script","Bradley Hand",cursive;
+  color-scheme:light;
+}
+:root[dir="rtl"]{--font:"Heebo","Inter",system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--card)}
+h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+input,select{font:inherit}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
+svg{display:inline-block}
+.ic{width:16px;height:16px;flex:none}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+[dir="rtl"] h1,[dir="rtl"] h2,[dir="rtl"] h3{letter-spacing:0}
+
+/* ---------- shell ---------- */
+.shell{display:flex;min-height:100%}
+.side{width:232px;flex:none;background:var(--card);border-inline-end:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:env(safe-area-inset-top,0px);height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:14px 12px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));z-index:30}
+.logo{display:flex;align-items:center;padding:8px 8px 18px}
+.logo img{height:30px;width:auto;display:block}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink-2);font-weight:500;font-size:13.5px}
+.nav a:hover{background:var(--card-2)}
+.nav a.on{background:var(--primary-soft);color:var(--primary-text)}
+.nav a .ic{color:var(--muted)}
+.nav a.on .ic{color:var(--primary-text)}
+.side-foot{margin-top:auto;padding:12px 10px 4px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.side-foot b{color:var(--ink-2);font-weight:600;font-size:12.5px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-inline-end:6px;vertical-align:1px}
+.scrim{position:fixed;inset:0;background:rgba(17,24,39,.4);z-index:25;opacity:0;pointer-events:none;transition:opacity .2s}
+.content{flex:1;min-width:0;display:flex;flex-direction:column}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--card);border-bottom:1px solid var(--line);height:52px;display:flex;align-items:center;gap:14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.menu{display:none;width:34px;height:34px;border-radius:8px;border:1px solid var(--line);place-items:center;color:var(--ink-2)}
+.crumb{font-weight:600;font-size:14px;color:var(--ink-2);display:flex;align-items:center;gap:8px}
+.crumb span{color:var(--faint);font-weight:400}
+.bar-r{margin-inline-start:auto;display:flex;align-items:center;gap:14px}
+.demo{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+[dir="rtl"] .demo{letter-spacing:0}
+.lang{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--card)}
+.lang:hover{background:var(--card-2)}
+.ap{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--ink-2);white-space:nowrap}
+.spark{color:var(--primary)}
+.switch{width:36px;height:20px;border-radius:999px;background:var(--line);position:relative;cursor:pointer;transition:background .2s;flex:none;border:0;padding:0;direction:ltr}
+.switch i{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.switch.on{background:var(--primary)}.switch.on i{transform:translateX(16px)}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--primary-deep);color:#fff;font-weight:600;font-size:12px;display:grid;place-items:center;flex:none}
+.main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px;max-width:1360px;width:100%;margin:0 auto}
+@media (max-width:900px){
+  .side{position:fixed;inset-inline-start:0;top:env(safe-area-inset-top,0px);transform:translateX(-100%);transition:transform .22s;box-shadow:var(--pop-shadow)}
+  [dir="rtl"] .side{transform:translateX(100%)}
+  .side.open,[dir="rtl"] .side.open{transform:none}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .menu{display:grid}
+  .demo{display:none}
+}
+@media (max-width:600px){.ap .ap-t{display:none}.bar-r{gap:10px}}
+
+/* ---------- cards & primitives ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;align-items:center;gap:10px;padding:18px 20px 0}
+.card-h h1{font-size:19px}
+.card-h .ic{color:var(--muted)}
+.card-pad{padding:0 20px 20px}
+.tabs{display:flex;gap:22px;padding:0 20px;border-bottom:1px solid var(--line);margin-top:10px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:10px 0 11px;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-weight:500}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--primary);border-bottom-color:var(--primary)}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:16px 20px 0}
+@media (max-width:640px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.tile .l{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.tile .v{font-size:20px;font-weight:500;margin-top:6px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.tile .ic{width:15px;height:15px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:6px;padding:7px 12px;font-size:13px;font-weight:500;color:var(--ink);transition:background .15s,border-color .15s;white-space:nowrap}
+.btn:hover{background:var(--card-2)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{background:var(--primary-deep);border-color:var(--primary-deep)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--card-2)}
+.btn.sm{padding:6px 11px;font-size:12.5px}
+.btn[disabled]{opacity:.5;cursor:default}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:500;color:var(--ink-2);white-space:nowrap;background:var(--card)}
+.chip.c-poconf{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.chip.c-poupd{background:var(--green-soft);color:var(--green-text);border-color:transparent}
+.chip.c-so{background:var(--primary-soft);color:var(--primary-text);border-color:transparent}
+.chip.c-inv{background:var(--slate-soft);color:var(--slate);border-color:transparent}
+.chip.c-oth{background:var(--line-2);color:var(--ink-2);border-color:transparent}
+.conf{display:inline-flex;align-items:center;border-radius:5px;padding:2px 7px;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;direction:ltr}
+.conf.hi{background:var(--green-soft);color:var(--green-text)}
+.conf.mid{background:var(--amber-soft);color:var(--amber)}
+.conf.lo{background:var(--rose-soft);color:var(--rose)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;padding:2px;background:var(--card-2);margin:16px 20px 0}
+.seg button{padding:5px 11px;border-radius:5px;font-size:12.5px;color:var(--muted);font-weight:500}
+.seg button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(17,24,39,.08)}
+.toolbar{display:flex;gap:8px;align-items:center;padding:16px 20px 0;flex-wrap:wrap;position:relative}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:220px;max-width:100%;color:var(--faint);font-size:13px;background:var(--card)}
+.search input{border:0;outline:0;background:transparent;width:100%;color:var(--ink);font-size:13px;padding:0}
+.search .ic{width:14px;height:14px;color:var(--faint)}
+.dd{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:12.5px;color:var(--ink-2);background:var(--card);font-weight:500}
+.dd .ic{width:12px;height:12px;color:var(--muted)}
+.dd.on{border-color:var(--primary);color:var(--primary-text)}
+.catpop{position:absolute;top:calc(100% + 6px);inset-inline-start:20px;z-index:15;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--pop-shadow);padding:10px;width:200px;display:flex;flex-direction:column;gap:6px}
+.catpop .cp-h{display:flex;align-items:center;justify-content:space-between;font-size:13.5px;font-weight:500;padding:4px 4px 8px;border-bottom:1px solid var(--line-2);margin-bottom:2px}
+.catpop .chip{justify-content:space-between;cursor:pointer;padding:6px 9px}
+.catpop .chip .ic{width:11px;height:11px}
+.catpop .chip:hover{filter:brightness(.97)}
+.tbl-wrap{overflow-x:auto;padding:12px 20px 20px}
+.tbl{width:100%;border-collapse:collapse;min-width:720px;font-size:13px}
+.tbl th{text-align:start;font-size:12px;font-weight:500;color:var(--muted);padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th .ic{width:11px;height:11px;vertical-align:-1px;margin-inline-start:4px;color:var(--faint)}
+.tbl td{padding:11px 8px;border-bottom:1px solid var(--line-2);vertical-align:middle;white-space:nowrap;color:var(--ink-2)}
+.tbl td.ell{max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.tbl td.date{color:var(--ink);font-variant-numeric:tabular-nums}
+.tbl tr.row{cursor:pointer}
+.tbl tr.row:hover td{background:var(--card-2)}
+.tbl tr:last-child td{border-bottom:0}
+.cb{width:14px;height:14px;border:1px solid var(--line);border-radius:3px;display:inline-block;vertical-align:middle;background:var(--card)}
+.src{display:inline-flex;align-items:center;gap:6px}
+.src .ic{width:14px;height:14px;color:var(--muted)}
+.empty{padding:28px 20px;text-align:center;color:var(--muted);font-size:13px}
+[dir="rtl"] .tbl td,[dir="rtl"] .rtbl td,[dir="rtl"] .lines td,[dir="rtl"] .ptab td{unicode-bidi:plaintext}
+
+/* ---------- cockpit ---------- */
+.split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;padding:16px 20px 20px;align-items:start}
+@media (max-width:980px){.split{grid-template-columns:1fr}}
+.flagbox{border:1px solid var(--line);border-radius:10px;min-width:0}
+.flag-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line-2);font-size:13.5px;font-weight:500;flex-wrap:wrap}
+.qcards{display:flex;flex-direction:column;gap:10px;padding:12px}
+.qcard{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--card);transition:opacity .3s,transform .3s}
+.qcard.out{opacity:0;transform:translateX(24px)}
+.qc-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.qc-top .time{font-size:12px;color:var(--muted)}
+.qc-id{font-size:22px;font-weight:600;letter-spacing:-.02em;margin-top:10px;direction:ltr}
+[dir="rtl"] .qc-id{text-align:right}
+.qc-line{font-size:14px;color:var(--ink);margin-top:2px}
+.qc-sub{font-size:12px;color:var(--faint);margin-top:4px}
+.qc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;flex-wrap:wrap}
+.qc-foot .r{display:flex;gap:8px;align-items:center}
+.auto-note{padding:10px 14px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line-2)}
+.auto-note b{color:var(--ink-2);font-weight:500}
+.sub-h{display:flex;align-items:baseline;justify-content:space-between;padding:16px 18px 0;font-weight:600;font-size:14.5px}
+.sub-h span{font-size:12px;color:var(--muted);font-weight:400}
+.chart{width:100%;height:auto;display:block;padding:8px 10px 10px;overflow:visible;direction:ltr}
+.chart text{font-family:var(--font);font-size:11px;fill:var(--muted)}
+.chart .grid{stroke:var(--line-2)}
+.chart .ln{fill:none;stroke:var(--ink);stroke-width:1.6}
+.chart .pt{fill:var(--ink)}
+.chart .lb{fill:var(--green-text);font-size:14px;font-weight:500}
+.chart .lbb{fill:var(--green-soft)}
+.chart .ax{fill:var(--muted);font-size:11px}
+.rtbl{width:100%;border-collapse:collapse;font-size:13px}
+.rtbl th{text-align:start;font-size:12px;font-weight:500;color:var(--muted);padding:10px 8px;border-bottom:1px solid var(--line)}
+.rtbl td{padding:11px 8px;border-bottom:1px solid var(--line-2);color:var(--ink-2);white-space:nowrap}
+.rtbl tr:last-child td{border-bottom:0}
+.rtbl .bar{display:inline-block;width:110px;height:5px;border-radius:3px;background:var(--line-2);vertical-align:middle;margin-inline-end:8px;overflow:hidden}
+.rtbl .bar i{display:block;height:100%;background:var(--green)}
+.audit{list-style:none;margin:0;padding:8px 20px 20px;display:flex;flex-direction:column}
+.audit li{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-2);font-size:13px;align-items:center}
+.audit li:last-child{border-bottom:0}
+.audit .t{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12.5px}
+.audit .who{font-size:12px;color:var(--muted)}
+.audit b{font-weight:500;color:var(--ink)}
+
+/* ---------- order details ---------- */
+.o-top{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;font-weight:500;padding:6px 0}
+.back:hover{color:var(--ink)}
+.back .ic{width:14px;height:14px}
+[dir="rtl"] .back .ic{transform:scaleX(-1)}
+.o-id{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:600;letter-spacing:-.02em;flex-wrap:wrap}
+.o-sub{font-size:13px;color:var(--muted);margin-top:2px}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:500;box-shadow:var(--shadow);margin-inline-start:auto;cursor:pointer;color:var(--ink)}
+.pill .spark{font-size:13px}
+.pill:hover{border-color:var(--primary)}
+.ogrid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,1fr);gap:16px;align-items:start;padding:16px 20px 20px}
+.ogrid>*{min-width:0}
+@media (max-width:980px){.ogrid{grid-template-columns:1fr}}
+.form-h{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:8px;margin:0 0 12px}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+@media (max-width:560px){.fgrid{grid-template-columns:1fr}}
+.field{position:relative;min-width:0}
+.field label{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:var(--ink-2);margin-bottom:6px}
+.info{width:13px;height:13px;border:1px solid var(--faint);border-radius:50%;font-size:9px;font-style:normal;display:inline-grid;place-items:center;color:var(--faint);line-height:1}
+.inp{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--faint);min-height:36px;background:var(--card);overflow:hidden}
+.inp .val{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[dir="rtl"] .inp .val{direction:ltr;text-align:right}
+.field.ext .inp{border-color:var(--green-line);background:var(--green-tint);color:var(--ink-2);cursor:pointer}
+.field.ext.warn .inp{border-color:var(--amber);background:var(--amber-soft)}
+.field.hi .inp{box-shadow:0 0 0 3px var(--green-soft)}
+.nb{width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+.field.warn .nb{background:var(--amber)}
+.chev{width:12px;height:12px;color:var(--muted);flex:none}
+.inp input{border:0;background:transparent;outline:0;width:100%;color:var(--ink);font-size:13px;padding:0;direction:ltr}
+.popover{position:absolute;top:calc(100% + 8px);inset-inline-start:0;z-index:12;width:min(320px,92vw);background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--pop-shadow);padding:14px 16px;font-size:14px;display:flex;flex-direction:column;gap:7px;color:var(--ink)}
+.popover b{font-weight:600}
+.popover .gchip{display:inline-block;background:var(--green-soft);color:var(--green-text);border-radius:5px;padding:1px 7px;font-weight:600;font-size:13px;direction:ltr}
+.popover .gchip.mid{background:var(--amber-soft);color:var(--amber)}
+.popover .pnote{display:flex;gap:8px;align-items:flex-start;background:var(--green-tint);border:1px solid var(--green-soft);color:var(--green-text);border-radius:8px;padding:10px 12px;font-size:13px;margin-top:4px}
+.popover .pnote.mid{background:var(--amber-soft);border-color:transparent;color:var(--amber)}
+.popover .pnote .ic{width:15px;height:15px;margin-top:1px}
+.field:last-child .popover,.field:nth-last-child(2) .popover{top:auto;bottom:calc(100% + 8px)}
+.lines-wrap{overflow-x:auto;margin-top:4px;border:1px solid var(--line);border-radius:8px}
+.lines{width:100%;border-collapse:collapse;font-size:13px}
+.lines th{text-align:start;font-size:12px;font-weight:500;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);background:var(--card-2);white-space:nowrap}
+.lines td{padding:9px 10px;border-bottom:1px solid var(--line-2);color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.lines td.wrap{white-space:normal;min-width:160px}
+.lines tr:last-child td{border-bottom:0}
+.lines td.hl{background:var(--amber-soft);color:var(--amber);font-weight:500}
+.lines td.ok{color:var(--green-text)}
+.lines td.bad{color:var(--rose);font-weight:600;background:var(--rose-soft)}
+.lines tfoot td{font-weight:500;color:var(--ink);background:var(--card-2);white-space:normal}
+.o-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;align-items:center}
+.banner{display:flex;gap:10px;align-items:flex-start;border-radius:8px;padding:11px 13px;font-size:13px;margin-top:18px}
+.banner .ic{width:16px;height:16px;margin-top:1px;flex:none}
+.banner.ok{background:var(--green-tint);border:1px solid var(--green-soft);color:var(--green-text)}
+.banner.ask{background:var(--amber-soft);color:var(--amber)}
+.banner.esc{background:var(--rose-soft);color:var(--rose)}
+.banner b{font-weight:600}
+.ocol{display:flex;flex-direction:column;gap:16px;min-width:0}
+.doc-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line-2);font-size:13px;font-weight:600;flex-wrap:wrap}
+.doc-h span{font-size:12px;color:var(--muted);font-weight:400}
+.ltr{direction:ltr;text-align:left}
+.hand{background:var(--paper);padding:22px 20px 18px;font-family:var(--hand-font);font-size:22px;line-height:1.25;color:var(--hand);border-radius:0 0 12px 12px;background-image:repeating-linear-gradient(transparent 0 31px,color-mix(in srgb,var(--line) 60%,transparent) 31px 32px)}
+.hb{position:relative;border:1.5px solid var(--green);border-radius:4px;padding:12px 12px 8px;margin:16px 4px 10px;cursor:pointer;transition:background .15s}
+.hb:hover,.hb.hi{background:color-mix(in srgb,var(--green-soft) 60%,transparent)}
+.hb p{margin:0}
+.tag{position:absolute;top:-11px;left:-2px;font-family:var(--font);font-size:11px;font-weight:500;background:var(--green);color:#fff;padding:2px 7px;border-radius:3px;line-height:1.4;white-space:nowrap}
+.pct{position:absolute;top:-11px;right:-2px;font-family:var(--font);font-size:11px;font-weight:600;background:var(--card);color:var(--green-text);border:1.5px solid var(--green);padding:1px 6px;border-radius:4px;line-height:1.4}
+.hand-free{margin:10px 6px 0;font-size:21px}
+.mail{padding:14px 16px}
+.mail .hdr{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;font-size:12px;color:var(--muted);padding-bottom:10px;border-bottom:1px solid var(--line-2)}
+.mail .hdr b{color:var(--ink-2);font-weight:500}
+.mail .hdr span{color:var(--ink);min-width:0;overflow-wrap:anywhere}
+.mail .subj{font-weight:600;font-size:13.5px;margin:10px 0 6px}
+.mail .body{color:var(--ink-2);display:flex;flex-direction:column;gap:8px;font-size:13px}
+.att{display:inline-flex;align-items:center;gap:7px;margin-top:12px;font-size:12px;font-weight:500;border:1px solid var(--line);border-radius:6px;padding:5px 9px;background:var(--card-2)}
+.att .ic{width:13px;height:13px;color:var(--rose)}
+.paper{margin:14px 16px 16px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:14px 16px;font-size:12px;box-shadow:0 6px 20px -14px rgba(0,0,0,.4)}
+.paper .pt{font-weight:600;font-size:13px}
+.paper .pm{color:var(--muted);margin-top:2px;display:flex;flex-direction:column;gap:1px;font-size:11.5px}
+.ptab-wrap{overflow-x:auto;margin-top:10px}
+.ptab{width:100%;border-collapse:collapse;font-size:11.5px}
+.ptab th{text-align:left;font-weight:500;color:var(--muted);border-bottom:1px solid var(--line);padding:5px 6px;font-size:11px;white-space:nowrap}
+.ptab td{padding:6px;border-bottom:1px solid var(--line-2);vertical-align:top;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ptab td:nth-child(2){white-space:normal;min-width:120px}
+.ptab td.hl{background:var(--amber-soft);color:var(--amber);font-weight:500}
+.ptab tfoot td{border-bottom:0;font-weight:500;padding-top:8px;white-space:normal}
+.thread{display:flex;flex-direction:column;gap:10px;padding:14px 16px}
+.msg{border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px}
+.msg.me{border-color:var(--green-line);background:var(--green-tint)}
+.msg .mh{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap}
+.msg .mh b{color:var(--ink);font-weight:600}
+.msg .mb{color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+/* confidence panel */
+.cf{padding:16px 18px}
+.cf .big{display:flex;align-items:baseline;gap:4px;line-height:1;direction:ltr;justify-content:flex-start}
+[dir="rtl"] .cf .big{justify-content:flex-end}
+.cf .score{font-size:46px;font-weight:500;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.cf .of{font-size:22px;color:var(--muted);font-weight:400}
+.cf .bar{height:6px;border-radius:3px;background:var(--green-soft);margin-top:12px;overflow:hidden}
+.cf .bar i{display:block;height:100%;background:var(--green);border-radius:3px;transition:width .4s}
+.cf .thr-l{font-size:13px;color:var(--ink-2);margin-top:8px}
+.cf .thr-l b{font-weight:600;color:var(--ink)}
+.cf hr{border:0;border-top:1px solid var(--line-2);margin:14px 0}
+.cf .rows{display:flex;flex-direction:column;gap:9px}
+.cf .r{display:grid;grid-template-columns:minmax(120px,160px) 1fr 30px;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+.cf .r .bar{margin:0;height:4px}
+.cf .r b{text-align:end;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+.cf .r.low .bar i{background:var(--amber)}
+.cf .thr-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ink-2)}
+.cf .thr-row b{font-weight:600;color:var(--ink)}
+.cf input[type=range]{width:100%;accent-color:var(--primary);margin:10px 0 6px}
+.formula{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin-top:10px}
+.fchip{display:inline-block;border-radius:5px;padding:3px 8px;font-size:12.5px;font-weight:500}
+.fchip.rose{background:var(--rose-soft);color:var(--rose)}
+.fchip.amber{background:var(--amber-soft);color:var(--amber)}
+.fchip.green{background:var(--green-soft);color:var(--green-text)}
+/* ai emails + log */
+.emails{display:flex;flex-direction:column;gap:12px;padding:16px 20px 20px}
+.em{border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:13px;background:var(--card)}
+.em.draft{border-color:var(--green-line);background:var(--green-tint)}
+.em .eh{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.em .eh .by{font-size:12px;color:var(--green-text);font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.em .meta{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 10px;font-size:12px;color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--line-2);margin-bottom:10px}
+.em .meta b{color:var(--ink-2);font-weight:500}
+.em .meta span{min-width:0;overflow-wrap:anywhere;color:var(--ink);direction:ltr;text-align:left}
+.em .ebody{color:var(--ink-2);display:flex;flex-direction:column;gap:8px;max-width:70ch;direction:ltr;text-align:left}
+.em .ebtn{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
+.log{list-style:none;margin:0;padding:10px 20px 20px}
+.log li{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;padding:9px 0 9px 14px;padding-inline-start:14px;padding-inline-end:0;border-inline-start:2px solid var(--line-2);position:relative;font-size:13px;color:var(--ink-2)}
+.log li::before{content:"";position:absolute;inset-inline-start:-5px;top:14px;width:8px;height:8px;border-radius:50%;background:var(--line)}
+.log li.ai::before{background:var(--green)}
+.log li.user::before{background:var(--primary)}
+.log .t{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12.5px}
+.log b{font-weight:500;color:var(--ink)}
+/* settings */
+.set-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:860px){.set-grid{grid-template-columns:1fr}}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line-2);font-size:13.5px}
+.set-row:last-child{border-bottom:0}
+.set-row small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.bands{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.conn{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line-2);font-size:13.5px}
+.conn:last-child{border-bottom:0}
+.conn .ic{color:var(--muted)}
+.conn span{margin-inline-start:auto;font-size:12px;color:var(--green-text);font-weight:500}
+/* toast */
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);background:var(--ink);color:#F5F5F3;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transition:opacity .25s,transform .25s;z-index:50;max-width:min(92vw,560px);text-align:center;pointer-events:none;box-shadow:var(--pop-shadow)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<div class="shell">
+  <aside class="side" id="side" aria-label="Navigation">
+    <div class="logo"><img src="data:image/png;base64,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" alt="Jako" width="134" height="56"></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot" id="sideFoot"></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="content">
+    <header class="bar">
+      <button class="menu" id="menuBtn" aria-label="Open navigation"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div class="crumb" id="crumb"></div>
+      <div class="bar-r">
+        <span class="demo" id="demoChip"></span>
+        <button class="lang" id="langBtn" aria-label="Switch language"></button>
+        <span class="ap"><span class="spark">✦</span><span class="ap-t" id="apLabel">AutoPilot</span><button class="switch on" id="apSwitch" role="switch" aria-checked="true" aria-label="AutoPilot"><i></i></button></span>
+        <span class="avatar" title="Maren Köhler · Operations">MK</span>
+      </div>
+    </header>
+    <main class="main">
+      <section class="view" id="v-cockpit"></section>
+      <section class="view" id="v-email" hidden></section>
+      <section class="view" id="v-orders" hidden></section>
+      <section class="view" id="v-order" hidden></section>
+      <section class="view" id="v-settings" hidden></section>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const fmt = n => n.toLocaleString('en-GB');
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const svg = (p, cls = 'ic') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const I = {
+  cockpit: svg('<path d="M12 3 5 7v6c0 4.4 3 7.4 7 8 4-.6 7-3.6 7-8V7z"/><path d="m9 12 2 2 4-4"/>'),
+  mail: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+  orders: svg('<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="M9 13h6M9 17h4"/>'),
+  suppliers: svg('<path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-5h6v5M9 12h2M13 12h2"/>'),
+  settings: svg('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>'),
+  panel: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>'),
+  search: svg('<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/>'),
+  chev: svg('<path d="m6 9 6 6 6-6"/>'),
+  sort: svg('<path d="m8 9 4-4 4 4M8 15l4 4 4-4"/>'),
+  inbox: svg('<path d="M4 6h16v12H4z"/><path d="m4 8 8 5 8-5"/>'),
+  edi: svg('<path d="M4 7h13l-3-3M20 17H7l3 3"/>'),
+  file: svg('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>'),
+  sheet: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>'),
+  checkc: svg('<circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/>'),
+  back: svg('<path d="M19 12H5m6-6-6 6 6 6"/>'),
+  alert: svg('<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>'),
+  teams: svg('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/>'),
+  erp: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 12h10M7 8h6M7 16h8"/>'),
+  send: svg('<path d="m3 11 18-8-8 18-2-7z"/>'),
+  clock: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+};
+const SRC_ICON = { Outlook: I.inbox, Gmail: I.inbox, EDI: I.edi, Teams: I.teams };
+const CAT = { poconf:'PO Confirmation', poupd:'PO Updates', so:'Sales Order', inv:'Invoice', oth:'Others' };
+const confCls = c => c >= 90 ? 'hi' : (c >= 60 ? 'mid' : 'lo');
+
+/* ------------------------------------------------------------------ Hebrew ------------------------------------------------------------------ */
+const HE = {
+  'Autopilot Cockpit':'קוקפיט אוטופיילוט','Email':'אימייל','Orders':'הזמנות','Suppliers':'ספקים','Settings':'הגדרות',
+  'Demo · simulated data':'דמו · נתונים מדומים','AutoPilot':'אוטופיילוט','SAP S/4HANA · connected':'SAP S/4HANA · מחובר','Outlook · Gmail · EDI':'Outlook · Gmail · EDI',
+  'Review Queue':'תור לבדיקה','Supplier Readiness':'מוכנות ספקים','Audit Trail':'יומן ביקורת','Autopilot rate':'שיעור אוטופיילוט','Actions today':'פעולות היום','Avg decision':'זמן החלטה ממוצע','Accuracy':'דיוק','Paused':'מושהה',
+  'Flagged for Review':'סומנו לבדיקה','{n} transactions need attention':'{n} טרנזקציות דורשות טיפול','1 transaction needs attention':'טרנזקציה אחת דורשת טיפול','Approve All':'אשר הכל','Open':'פתח','Escalate':'הסלם','Approve':'אשר',
+  'Nothing flagged. Jako is running on its own and will flag anything below the threshold.':'אין טרנזקציות מסומנות. ג׳אקו רץ לבד ויסמן כל מה שמתחת לסף.',
+  'Auto-executed today:':'בוצעו אוטומטית היום:','transactions':'טרנזקציות','threshold':'סף','last:':'אחרון:','Autopilot Confidence':'ביטחון אוטופיילוט','Weeks since go-live':'שבועות מאז העלייה לאוויר','Weeks':'שבועות',
+  'Supplier':'ספק','Transactions (30d)':'טרנזקציות (30 יום)','Autopilot':'אוטופיילוט','Avg confidence':'ביטחון ממוצע','Readiness':'מוכנות','Status':'סטטוס','Learning':'בלמידה','Review':'בבדיקה',
+  'PO Confirmation':'אישור הזמנת רכש','PO Updates':'עדכוני הזמנת רכש','PO Update':'עדכון הזמנת רכש','Sales Order':'הזמנת לקוח','Invoice':'חשבונית','Others':'אחר','New Customer':'לקוח חדש',
+  'Open Actions':'פעולות פתוחות','Inbound':'נכנס','Outbound':'יוצא','Total':'סה״כ','Search...':'חיפוש...','Source':'מקור','Mailbox':'תיבת דואר','Category':'קטגוריה','All categories':'כל הקטגוריות',
+  'Date':'תאריך','Sender':'שולח','Receiver':'נמען','Subject':'נושא','confidence':'ביטחון','Draft':'טיוטה','Sent':'נשלח','No emails in this view.':'אין אימיילים בתצוגה הזו.',
+  'All':'הכל','Sales orders':'הזמנות לקוח','Purchase orders':'הזמנות רכש','Invoices':'חשבוניות','Order':'הזמנה','Counterparty':'צד שני','Type':'סוג','Value':'ערך','Approved':'אושר','Escalated':'הוסלם','Auto-executed':'בוצע אוטומטית','Flagged':'סומן',
+  'Back':'חזרה','received':'התקבל','via':'דרך','Jako has drafted an email for you.':'ג׳אקו ניסח עבורך אימייל.','Order Details':'פרטי הזמנה','AI Emails':'אימיילים של AI','Activity Log':'יומן פעילות',
+  'PO Headers':'כותרת הזמנה','Invoice Headers':'כותרת חשבונית','Line Items':'שורות','4-Way Match':'התאמה 4-כיוונית',
+  'PO Number':'מספר הזמנה','Order Date':'תאריך הזמנה','Customer Name and Code':'שם וקוד לקוח','Delivery Address':'כתובת למשלוח','City':'עיר','Country':'מדינה','Delivery Date':'תאריך אספקה','Shipment Date':'תאריך משלוח','Entity':'ישות','Email Date':'תאריך האימייל','Sender Email':'אימייל השולח','Incoterms':'תנאי מסירה',
+  'Confirmation Number':'מספר אישור','Supplier Name and Code':'שם וקוד ספק','Confirmed Delivery Date':'תאריך אספקה מאושר','Confirmed Net Amount':'סכום נטו מאושר','Payment Terms':'תנאי תשלום','Buyer':'קניין','Invoice Number':'מספר חשבונית','Invoice Date':'תאריך חשבונית','Net Amount':'סכום נטו','Currency':'מטבע','Goods Receipt':'קבלת סחורה','Cost Center':'מרכז עלות','New Delivery Date':'תאריך אספקה חדש','Partial Shipment':'משלוח חלקי','Affected Customer Order':'הזמנת לקוח מושפעת','Stock Cover':'כיסוי ממלאי',
+  'AI Confidence:':'ביטחון AI:','Extracted:':'חולץ:','Jako extracted this value with high accuracy and high confidence.':'ג׳אקו חילץ את הערך הזה בדיוק גבוה ובביטחון גבוה.',
+  'Photo of a handwritten order · 1 page':'צילום של הזמנה בכתב יד · עמוד אחד','Email with PDF attachment · 2 pages':'אימייל עם קובץ PDF · 2 עמודים','PDF invoice · 1 page':'חשבונית PDF · עמוד אחד','Email in Italian with an Excel attachment':'אימייל באיטלקית עם קובץ אקסל','Chaser sent by Jako on 20 Oct, reply this morning':'תזכורת שג׳אקו שלח ב-20 באוקטובר, תשובה הבוקר','email thread':'שרשור אימיילים',
+  'customer name':'שם לקוח','delivery date':'תאריך אספקה','delivery address':'כתובת אספקה','line items':'שורות',
+  'Threshold:':'סף:','history match':'התאמה להיסטוריה','document completeness':'שלמות המסמך','price deviation':'סטיית מחיר','delivery date variance':'סטיית תאריך אספקה','master data quality':'איכות נתוני אב','Autopilot threshold':'סף אוטופיילוט','score':'ציון','Auto-execute':'ביצוע אוטומטי','Flag for review':'סימון לבדיקה','AutoPilot off · review':'אוטופיילוט כבוי · בדיקה',
+  'Approved by Maren Köhler':'אושר על ידי מארן קלר','Score {s} ≥ threshold {t}, no review needed.':'ציון {s} ≥ סף {t}, לא נדרשת בדיקה.','Flagged for review.':'סומן לבדיקה.','Score {s} is below the threshold of {t}. Nothing has been written to SAP yet.':'ציון {s} נמוך מהסף {t}. עדיין לא נכתב דבר ל-SAP.',
+  'Back to cockpit':'חזרה לקוקפיט','Save & approve':'שמור ואשר','Cancel':'ביטול','Review drafted email':'בדוק את טיוטת האימייל','Edit':'עריכה','View in SAP':'פתח ב-SAP','Approve & sync to SAP':'אשר וסנכרן ל-SAP',
+  'Drafted by Jako':'נוסח על ידי ג׳אקו','Sent by Jako':'נשלח על ידי ג׳אקו','Sent by Maren Köhler':'נשלח על ידי מארן קלר','Draft · waiting for you':'טיוטה · ממתינה לך','To':'אל','From':'מאת','Received':'התקבל','Send':'שלח','Editing · click Send when done':'בעריכה · לחץ שלח בסיום',
+  'Transactions above the threshold run without review':'טרנזקציות מעל הסף רצות ללא בדיקה','≥ {t} · Auto-execute':'≥ {t} · ביצוע אוטומטי','50–{t} · Flag for review':'50–{t} · סימון לבדיקה','< 50 · Escalate':'< 50 · הסלמה','Customer-facing emails':'אימיילים ללקוחות','Jako drafts, a person sends':'ג׳אקו מנסח, אדם שולח','Supplier emails':'אימיילים לספקים','Sent automatically above the threshold':'נשלחים אוטומטית מעל הסף','Learn from edits':'למידה מעריכות','Every correction becomes a rule for that counterparty':'כל תיקון הופך לכלל עבור אותו צד','Connections':'חיבורים','Connected':'מחובר','Supplier portals':'פורטלי ספקים',
+  '<b>AutoPilot on.</b> Transactions above the threshold run on their own.':'<b>אוטופיילוט פועל.</b> טרנזקציות מעל הסף רצות לבד.','<b>AutoPilot off.</b> Every transaction waits for review.':'<b>אוטופיילוט כבוי.</b> כל טרנזקציה ממתינה לבדיקה.',
+  '{id} approved.':'{id} אושרה.','{id} escalated.':'{id} הוסלמה.','{n} transactions approved':'{n} טרנזקציות אושרו','and synced to SAP.':'וסונכרנו ל-SAP.','Jako learned from your edit.':'ג׳אקו למד מהעריכה שלך.','{n} field(s) corrected · the pattern now applies to {p}.':'{n} שדות תוקנו · הדפוס חל מעתה על {p}.','Sent to {to}.':'נשלח אל {to}.','document opened in a new window.':'המסמך נפתח בחלון חדש.',
+  'approved':'אושרה','escalated':'הוסלמה','Maren Köhler':'מארן קלר','email sent to {to}':'אימייל נשלח אל {to}','Maren sent the drafted email to {to}':'מארן שלחה את טיוטת האימייל אל {to}','Maren edited {n} field(s) · Jako learned the correction':'מארן ערכה {n} שדות · ג׳אקו למד את התיקון','Maren approved':'מארן אישרה','Maren escalated':'מארן הסלימה',
+  // queue cards
+  'Price variance +2.2% vs SAP master':'סטיית מחיר +2.2% מול נתוני SAP','ERP shows EUR 47,712 · Supplier confirms EUR 47,820':'ב-ERP: EUR 47,712 · הספק מאשר EUR 47,820','Quantity mismatch on line 3':'אי-התאמת כמות בשורה 3','Invoice 50 drums · Goods receipt 48 · Packing list 48':'חשבונית 50 חביות · קבלת סחורה 48 · תעודת משלוח 48','First order, no history available':'הזמנה ראשונה, אין היסטוריה','Officine Bellandi S.r.l. · 4 lines · EUR 9,120 · 1 material ambiguous':'Officine Bellandi S.r.l. · 4 שורות · EUR 9,120 · פריט אחד לא חד-משמעי','Delivery date moved +8 days':'תאריך האספקה נדחה ב-8 ימים','Inserts 29 Oct (was 21 Oct) · SO-2210 for Mertens promised 30 Oct':'אינסרטים 29 באוקטובר (במקום 21) · SO-2210 של Mertens הובטח ל-30 באוקטובר','today':'היום',
+  // auto texts & actions
+  'SO-2340 created in SAP':'SO-2340 נוצרה ב-SAP','PO 4500128702 updated in SAP':'הזמנה 4500128702 עודכנה ב-SAP','Invoice posted in SAP':'החשבונית נרשמה ב-SAP','SO-2341 created in SAP':'SO-2341 נוצרה ב-SAP','PO 4500128690 updated in SAP':'הזמנה 4500128690 עודכנה ב-SAP','22 Oct, 14:30':'22 באוקטובר, 14:30',
+  'SO-2340 confirmed. Order confirmation sent to Klaus Brandt.':'SO-2340 אושרה. אישור ההזמנה נשלח ל-Klaus Brandt.','Escalated to Sofia Rinaldi (account manager).':'הוסלם ל-Sofia Rinaldi (מנהלת הלקוח).',
+  'PO 4500128702 updated in SAP: delivery 16 Nov, line 2 price accepted. Reply sent to Bavaria Fastener.':'הזמנה 4500128702 עודכנה ב-SAP: אספקה 16 בנובמבר, מחיר שורה 2 התקבל. תשובה נשלחה ל-Bavaria Fastener.','Escalated to Jonas Weber (buyer) with the price comparison attached.':'הוסלם ל-Jonas Weber (קניין) עם השוואת המחירים מצורפת.',
+  'Lines 1–2 (EUR 19,402) posted in SAP. Line 3 held, claim CL-2026-0412 opened, credit note requested.':'שורות 1–2 (EUR 19,402) נרשמו ב-SAP. שורה 3 מעוכבת, תביעה CL-2026-0412 נפתחה, התבקש זיכוי.','Escalated to Tobias Lenz (Finance) with the 4-way match attached.':'הוסלם ל-Tobias Lenz (כספים) עם ההתאמה ה-4-כיוונית מצורפת.',
+  'SO-2341 created in SAP with GSK-80-NBR. Order confirmation sent to Marco Ferri.':'SO-2341 נוצרה ב-SAP עם GSK-80-NBR. אישור ההזמנה נשלח ל-Marco Ferri.','Escalated to Sofia Rinaldi (account manager) to confirm the gasket with the customer.':'הוסלם ל-Sofia Rinaldi (מנהלת הלקוח) לאישור האטם מול הלקוח.',
+  'PO 4500128690 updated in SAP with the split delivery. Reply sent to An De Wilde, Sofia Rinaldi informed about SO-2210.':'הזמנה 4500128690 עודכנה ב-SAP עם המשלוח המפוצל. תשובה נשלחה ל-An De Wilde, Sofia Rinaldi עודכנה לגבי SO-2210.','Escalated to Jonas Weber to decide on an alternative source.':'הוסלם ל-Jonas Weber להחלטה על מקור חלופי.',
+  // popovers
+  'No confirmation on file yet':'אין עדיין אישור במערכת','Not posted yet':'טרם נרשמה','New customer reference':'מספר הזמנה של לקוח חדש','KW 47 (calendar week)':'KW 47 (שבוע קלנדרי)','12 Nov 2026 on the PO':'12 בנובמבר 2026 בהזמנה','EUR 47,712 on the PO':'EUR 47,712 בהזמנה','3 handwritten lines':'3 שורות בכתב יד','3 materials matched in master data':'3 פריטים הותאמו בנתוני האב','50 drums on the invoice':'50 חביות בחשבונית','48 drums received · 48 on the packing list':'48 חביות התקבלו · 48 בתעודת המשלוח','4 lines from Ordine_553.xlsx':'4 שורות מתוך Ordine_553.xlsx','3 of 4 materials matched':'3 מתוך 4 פריטים הותאמו','06/11/2026 · feasible':'06/11/2026 · ישים','ship 28 October, arriving 29 October':'משלוח 28 באוקטובר, הגעה 29 באוקטובר','21 Oct 2026 on the PO':'21 באוקטובר 2026 בהזמנה','can ship today as a partial delivery':'יכול לצאת היום כמשלוח חלקי','Line 1 · 12 holder sets':'שורה 1 · 12 סטים של מחזיקים','300871 · created 14 Oct 2026':'300871 · נוצר ב-14 באוקטובר 2026','PO net EUR 23,940':'נטו בהזמנה EUR 23,940',
+  'Jako read “KW 47” as Monday 16 Nov. The PO says 12 Nov: +4 days.':'ג׳אקו קרא ״KW 47״ כיום שני 16 בנובמבר. בהזמנה כתוב 12 בנובמבר: +4 ימים.','Line 2 at 4,21 €/100 vs 4,12 €/100 on the PO: +2.2%, above the 2% tolerance.':'שורה 2 במחיר 4,21 €/100 לעומת 4,12 €/100 בהזמנה: +2.2%, מעל הסובלנות של 2%.','Line 3 is short by 2 drums (EUR 181.52). Goods receipt and packing list agree with each other.':'בשורה 3 חסרות 2 חביות (EUR 181.52). קבלת הסחורה ותעודת המשלוח תואמות זו לזו.','“Guarnizione 80mm” matches GSK-80-NBR and GSK-80-EPDM. No order history to decide.':'״Guarnizione 80mm״ מתאים גם ל-GSK-80-NBR וגם ל-GSK-80-EPDM. אין היסטוריית הזמנות שתכריע.','+8 days on line 2. SO-2210 (Mertens) promised 30 Oct keeps one day of buffer.':'+8 ימים בשורה 2. ל-SO-2210 (Mertens) שהובטח ל-30 באוקטובר נשאר יום אחד של מרווח.',
+  // line tables
+  'Material':'פריט','Description':'תיאור','Qty':'כמות','Unit':'יחידה','Unit price':'מחיר יחידה','Pos':'פוז׳','Article':'פריט','Confirmed price':'מחיר מאושר','PO price':'מחיר בהזמנה','Confirmed date':'תאריך מאושר','PO date':'תאריך בהזמנה','Line':'שורה','PO':'הזמנה','Goods receipt':'קבלת סחורה','Packing list':'תעודת משלוח','Riga':'שורה','Document line':'שורה במסמך','Matched material':'פריט מותאם','Match':'התאמה','Item':'פריט','New date':'תאריך חדש','2 short':'חסרות 2','+2 days':'+2 ימים','+8 days':'+8 ימים',
+  'Net total EUR 1,248.00 · customer price list 2026':'סה״כ נטו EUR 1,248.00 · מחירון לקוח 2026','Confirmed net EUR 47,820 · PO net EUR 47,712 · difference EUR 108':'נטו מאושר EUR 47,820 · נטו בהזמנה EUR 47,712 · הפרש EUR 108','2 of 3 lines match in all four documents · EUR 19,402 clean · EUR 4,538 on hold':'2 מתוך 3 שורות תואמות בכל ארבעת המסמכים · EUR 19,402 נקי · EUR 4,538 מעוכב','Prices from customer price list 2026 · net EUR 9,120':'מחירים ממחירון לקוח 2026 · נטו EUR 9,120','SO-2210 for Mertens promised 30 Oct · 24 inserts on stock cover the first delivery':'SO-2210 של Mertens הובטח ל-30 באוקטובר · 24 אינסרטים במלאי מכסים את האספקה הראשונה',
+  // logs
+  'Email received in orders@ (Outlook) with order_7781.jpg':'אימייל התקבל ב-orders@ (Outlook) עם order_7781.jpg','Classified as Sales Order · 97%':'סווג כהזמנת לקוח · 97%','4 fields and 3 line items read from the photo':'4 שדות ו-3 שורות נקראו מהצילום','Matched to customer 300412 and 3 materials in SAP master data':'הותאם ללקוח 300412 ול-3 פריטים בנתוני האב של SAP','Scored 87 ≥ threshold 75 → auto-execute':'ציון 87 ≥ סף 75 ← ביצוע אוטומטי','Order confirmation drafted for Klaus Brandt · waiting for review':'אישור הזמנה נוסח עבור Klaus Brandt · ממתין לבדיקה',
+  'Email received in einkauf@ (Outlook) with AB-77120.pdf':'אימייל התקבל ב-einkauf@ (Outlook) עם AB-77120.pdf','Classified as PO Confirmation · 99%':'סווג כאישור הזמנת רכש · 99%','14 fields and 3 lines extracted':'14 שדות ו-3 שורות חולצו','Matched to PO 4500128702, vendor 200114, 3 of 3 lines':'הותאם להזמנה 4500128702, ספק 200114, 3 מתוך 3 שורות','Price deviation +2.2% on line 2, above the 2% tolerance':'סטיית מחיר +2.2% בשורה 2, מעל הסובלנות של 2%','Scored 67 < threshold 75 → flagged for review':'ציון 67 < סף 75 ← סומן לבדיקה','Reply to the supplier drafted':'תשובה לספק נוסחה',
+  'Email received in rechnungen@ (Outlook) with FV_2026_10_0917.pdf':'אימייל התקבל ב-rechnungen@ (Outlook) עם FV_2026_10_0917.pdf','Classified as Invoice · 99%':'סווג כחשבונית · 99%','3 lines extracted, PO 4500128655 found':'3 שורות חולצו, הזמנה 4500128655 אותרה','4-way match: PO, goods receipt 5000233981, packing list, invoice':'התאמה 4-כיוונית: הזמנה, קבלת סחורה 5000233981, תעודת משלוח, חשבונית','Line 3: 50 invoiced, 48 received, 48 on the packing list':'שורה 3: 50 בחשבונית, 48 התקבלו, 48 בתעודת המשלוח','Scored 71 < threshold 75 → flagged for review':'ציון 71 < סף 75 ← סומן לבדיקה','Credit note request drafted':'בקשה לזיכוי נוסחה',
+  'Email received in ordini@ (Gmail) with Ordine_553.xlsx':'אימייל התקבל ב-ordini@ (Gmail) עם Ordine_553.xlsx','Classified as Sales Order, Italian · 99%':'סווג כהזמנת לקוח, איטלקית · 99%','4 lines read from Excel, customer 300871 matched':'4 שורות נקראו מאקסל, לקוח 300871 הותאם','3 of 4 materials matched; line 2 ambiguous (NBR / EPDM)':'3 מתוך 4 פריטים הותאמו; שורה 2 לא חד-משמעית (NBR / EPDM)','New customer: no order history · scored 69 < threshold 75 → flagged':'לקוח חדש: אין היסטוריית הזמנות · ציון 69 < סף 75 ← סומן','Order confirmation drafted in Italian':'אישור הזמנה נוסח באיטלקית',
+  'Chaser sent to Leuven Tool: PO due 21 Oct with no notice':'תזכורת נשלחה ל-Leuven Tool: הזמנה ל-21 באוקטובר ללא הודעת משלוח','Reply received, classified as PO Update · 99%':'תשובה התקבלה, סווגה כעדכון הזמנת רכש · 99%','New dates read: holders today, inserts 29 Oct':'תאריכים חדשים נקראו: מחזיקים היום, אינסרטים 29 באוקטובר','Linked to SO-2210 (Mertens), stock checked in Dortmund':'קושר ל-SO-2210 (Mertens), מלאי נבדק בדורטמונד','Scored 84 ≥ threshold 75 → auto-execute':'ציון 84 ≥ סף 75 ← ביצוע אוטומטי','PO 4500128690 updated in SAP, reply drafted':'הזמנה 4500128690 עודכנה ב-SAP, תשובה נוסחה',
+  // audit
+  'SO-2338 confirmation sent to Haller Metallbau':'אישור SO-2338 נשלח ל-Haller Metallbau','PO 4500128801 confirmed dates written to SAP':'תאריכים מאושרים של הזמנה 4500128801 נכתבו ל-SAP','INV-0931 posted in SAP (MIRO), 3 of 3 lines matched':'INV-0931 נרשמה ב-SAP (MIRO), 3 מתוך 3 שורות תואמות','PO 4500128690 delivery dates updated (split delivery)':'תאריכי אספקה של הזמנה 4500128690 עודכנו (משלוח מפוצל)','Chaser sent to Stalmex for PO 4500128660':'תזכורת נשלחה ל-Stalmex עבור הזמנה 4500128660','SO-2335 created in SAP for Van Dijk Constructie':'SO-2335 נוצרה ב-SAP עבור Van Dijk Constructie','SO-2340 created in SAP for Mertens Maschinenbau':'SO-2340 נוצרה ב-SAP עבור Mertens Maschinenbau','Goods receipt 5000234102 posted (Dutch Valve Works)':'קבלת סחורה 5000234102 נרשמה (Dutch Valve Works)','22 Oct':'22 באוק׳','Jako':'ג׳אקו',
+};
+const t = s => (state.lang === 'he' && HE[s]) || s;
+const tf = (s, v) => Object.entries(v).reduce((a, [k, val]) => a.split('{' + k + '}').join(val), t(s));
+
+/* ------------------------------------------------------------------ data ------------------------------------------------------------------ */
+const ORDERS = {
+  'SO-2340': {
+    id:'SO-2340', cat:'so', chip:'Sales Order', party:'Mertens Maschinenbau GmbH', received:'22 Oct 2026, 14:28', via:'Outlook', value:1248, score:87, hero:true,
+    autoText:'SO-2340 created in SAP', autoAt:'22 Oct, 14:30',
+    br:[['history match',92],['document completeness',88],['price deviation',78],['delivery date variance',85],['master data quality',91]],
+    formTitle:'PO Headers', docFile:'order_7781.jpg', docSub:'Photo of a handwritten order · 1 page',
+    fields:[
+      {l:'PO Number', v:'PO2026007781'},
+      {l:'Order Date', v:'22 Oct 2026'},
+      {l:'Customer Name and Code', v:'Mertens Maschinenbau GmbH · 300412', b:1, dd:true, pop:{c:98, ex:'Mertens Maschinenbau, Werk 2', erp:'300412 · Mertens Maschinenbau GmbH'}},
+      {l:'Delivery Address', v:'Industriestraße 12, Werk 2', b:3, pop:{c:99, ex:'Industriestraße 12, 33602 Bielefeld DEU', erp:'Ship-to 300412-02 · Werk 2'}},
+      {l:'City', v:'Bielefeld'}, {l:'Country', v:'Germany'},
+      {l:'Delivery Date', v:'4th Nov 2026', b:2, pop:{c:99, ex:'4th Nov 2026', erp:'04/11/2026'}},
+      {l:'Shipment Date', v:'2nd Nov 2026'},
+      {l:'Entity', v:'2110'}, {l:'Email Date', v:'22 Oct 2026 2:28PM'},
+      {l:'Sender Email', v:'einkauf@mertens-maschinenbau.de'}, {l:'Incoterms', v:'DAP Bielefeld'} ],
+    linesTitle:'Line Items', linesBadge:4, linesPop:{c:98, ex:'3 handwritten lines', erp:'3 materials matched in master data'},
+    lines:{cols:['#','Material','Description','Qty','Unit','Unit price','Total'], rows:[['1','BRG-6205-2RS','Deep groove ball bearing 6205 2RS','120','pcs','3.40','408.00'],['2','SCR-M8x40-A2','Socket head cap screw M8×40 A2','2,000','pcs','0.19','380.00'],['3','CHN-10B1-5M','Roller chain 10B-1, 5 m box','10','box','46.00','460.00']], foot:'Net total EUR 1,248.00 · customer price list 2026'},
+    doc:{kind:'hand', blocks:[{b:1,t:'customer name',c:98,txt:'Order for Mertens Maschinenbau, Werk 2'},{b:2,t:'delivery date',c:99,txt:'Deliver by: 4th Nov to'},{b:3,t:'delivery address',c:99,txt:'Industriestraße 12, 33602 Bielefeld DEU'},{b:4,t:'line items',c:98,txt:'120 pcs bearing 6205 2RS<br>2000 pcs screws M8x40 A2<br>10 box chain 10B-1 (5 m)'}], free:'Thanks! K. Brandt'},
+    emails:[
+      {dir:'out', draft:true, to:'einkauf@mertens-maschinenbau.de', subject:'Auftragsbestätigung SO-2340 zu Ihrer Bestellung 7781', at:'22 Oct, 14:30', body:['Guten Tag Herr Brandt,','vielen Dank für Ihre Bestellung 7781. Wir bestätigen die Lieferung von 3 Positionen (Kugellager 6205 2RS, 120 St · Zylinderschrauben M8×40 A2, 2.000 St · Rollenkette 10B-1, 10 Kartons) bis zum 4. November 2026 an Werk 2, Industriestraße 12, 33602 Bielefeld.','Nettobetrag 1.248,00 EUR gemäß Preisliste 2026. Die Auftragsbestätigung finden Sie im Anhang.','Mit freundlichen Grüßen, Jako für Nordwerk Industrial Supply']},
+      {dir:'in', from:'Klaus Brandt <einkauf@mertens-maschinenbau.de>', time:'22 Oct 2026, 14:28', subject:'Bestellung 7781', body:['Hallo,','anbei unsere Bestellung als Foto. Bitte wie besprochen bis 4.11. an Werk 2 liefern.','Danke und Gruß, Klaus Brandt'], attach:'order_7781.jpg'} ],
+    log:[['14:28','Email received in orders@ (Outlook) with order_7781.jpg','sys'],['14:28','Classified as Sales Order · 97%','ai'],['14:29','4 fields and 3 line items read from the photo','ai'],['14:29','Matched to customer 300412 and 3 materials in SAP master data','ai'],['14:29','Scored 87 ≥ threshold 75 → auto-execute','ai'],['14:30','SO-2340 created in SAP','ai'],['14:30','Order confirmation drafted for Klaus Brandt · waiting for review','ai']],
+    actions:{approve:'SO-2340 confirmed. Order confirmation sent to Klaus Brandt.', escalate:'Escalated to Sofia Rinaldi (account manager).'}
+  },
+  'PO-5138': {
+    id:'PO-5138', cat:'poconf', chip:'PO Confirmation', party:'Bavaria Fastener Systems AG', received:'23 Oct 2026, 09:11', via:'Outlook', value:47820, score:67, time:'09:12',
+    q:{line:'Price variance +2.2% vs SAP master', sub:'ERP shows EUR 47,712 · Supplier confirms EUR 47,820'},
+    autoText:'PO 4500128702 updated in SAP',
+    br:[['history match',84],['document completeness',100],['price deviation',38],['delivery date variance',42],['master data quality',71]],
+    formTitle:'PO Headers', docFile:'AB-77120.pdf', docSub:'Email with PDF attachment · 2 pages',
+    fields:[
+      {l:'PO Number', v:'PO-5138 · 4500128702'},
+      {l:'Confirmation Number', v:'AB-77120', b:1, pop:{c:99, ex:'AB-77120', erp:'No confirmation on file yet'}},
+      {l:'Supplier Name and Code', v:'Bavaria Fastener Systems AG · 200114', b:2, dd:true, pop:{c:98, ex:'Bavaria Fastener Systems AG, Ingolstadt', erp:'200114 · Bavaria Fastener Systems AG'}},
+      {l:'Order Date', v:'20 Oct 2026'},
+      {l:'Confirmed Delivery Date', v:'16 Nov 2026', b:3, warn:true, pop:{c:74, ex:'KW 47 (calendar week)', erp:'12 Nov 2026 on the PO', note:'Jako read “KW 47” as Monday 16 Nov. The PO says 12 Nov: +4 days.'}},
+      {l:'Confirmed Net Amount', v:'EUR 47,820', b:4, warn:true, pop:{c:96, ex:'47.820,00 €', erp:'EUR 47,712 on the PO', note:'Line 2 at 4,21 €/100 vs 4,12 €/100 on the PO: +2.2%, above the 2% tolerance.'}},
+      {l:'Incoterms', v:'DAP Dortmund'}, {l:'Payment Terms', v:'30 days net, 2% within 10'},
+      {l:'Entity', v:'2110'}, {l:'Email Date', v:'23 Oct 2026 9:11AM'},
+      {l:'Sender Email', v:'auftrag@bavaria-fastener.de'}, {l:'Buyer', v:'Jonas Weber'} ],
+    linesTitle:'Line Items', lines:{cols:['Pos','Article','Qty','Confirmed price','PO price','Confirmed date','PO date'], rows:[['1','Sechskantschraube M12×60 8.8 vz · 10-4412','60,000 St','0.412 €/St','0.412 €/St','16 Nov 2026','12 Nov 2026'],['2','Scheibe DIN 125 M12 vz · 10-2231','120,000 St','4.21 €/100','4.12 €/100','16 Nov 2026','12 Nov 2026'],['3','Mutter DIN 934 M12 8 vz · 10-3310','96,000 St','0.188 €/St','0.188 €/St','16 Nov 2026','12 Nov 2026']], hl:[[1,3],[0,5],[1,5],[2,5]], foot:'Confirmed net EUR 47,820 · PO net EUR 47,712 · difference EUR 108'},
+    doc:{kind:'mail', from:'Petra Huber <auftrag@bavaria-fastener.de>', to:'einkauf@nordwerk-industrial.de', date:'23 Oct 2026, 09:11', subject:'Auftragsbestätigung AB-77120 zu Bestellung 4500128702',
+      body:['Sehr geehrte Damen und Herren,','anbei erhalten Sie unsere Auftragsbestätigung zu Ihrer Bestellung 4500128702. Bitte beachten Sie den geänderten Liefertermin für alle Positionen (KW 47) sowie die Preisanpassung bei Position 2 aufgrund gestiegener Rohstoffkosten.','Mit freundlichen Grüßen, Petra Huber · Auftragsabwicklung'], attach:'AB-77120.pdf',
+      paper:{title:'Auftragsbestätigung AB-77120', meta:['Bavaria Fastener Systems AG · Ingolstadt','Ihre Bestellung 4500128702 · Datum 22.10.2026'], cols:['Pos','Artikel','Menge','Preis','Liefertermin'], rows:[['1','Sechskantschraube M12×60 8.8 vz · 10-4412','60.000 St','0,412 €/St','KW 47'],['2','Scheibe DIN 125 M12 vz · 10-2231','120.000 St','4,21 €/100','KW 47'],['3','Mutter DIN 934 M12 8 vz · 10-3310','96.000 St','0,188 €/St','KW 47']], hl:[[0,4],[1,3],[1,4],[2,4]], foot:'Nettobetrag 47.820,00 € · DAP Dortmund · 30 Tage netto, 2 % Skonto bei 10 Tagen'}},
+    emails:[
+      {dir:'out', draft:true, to:'auftrag@bavaria-fastener.de', subject:'Re: Auftragsbestätigung AB-77120', at:'09:13', body:['Sehr geehrte Frau Huber,','vielen Dank für Ihre Auftragsbestätigung AB-77120. Den Liefertermin KW 47 (16.11.2026) bestätigen wir. Die Preisanpassung bei Position 2 (4,21 €/100 statt 4,12 €/100) prüfen wir derzeit intern und melden uns bis Montag.','Mit freundlichen Grüßen, Jako für Nordwerk Industrial Supply, i. A. Jonas Weber']},
+      {dir:'in', from:'Petra Huber <auftrag@bavaria-fastener.de>', time:'23 Oct 2026, 09:11', subject:'Auftragsbestätigung AB-77120 zu Bestellung 4500128702', body:['Sehr geehrte Damen und Herren,','anbei erhalten Sie unsere Auftragsbestätigung zu Ihrer Bestellung 4500128702. Bitte beachten Sie den geänderten Liefertermin für alle Positionen (KW 47) sowie die Preisanpassung bei Position 2.','Mit freundlichen Grüßen, Petra Huber'], attach:'AB-77120.pdf'} ],
+    log:[['09:11','Email received in einkauf@ (Outlook) with AB-77120.pdf','sys'],['09:12','Classified as PO Confirmation · 99%','ai'],['09:12','14 fields and 3 lines extracted','ai'],['09:12','Matched to PO 4500128702, vendor 200114, 3 of 3 lines','ai'],['09:12','Price deviation +2.2% on line 2, above the 2% tolerance','ai'],['09:12','Scored 67 < threshold 75 → flagged for review','ai'],['09:13','Reply to the supplier drafted','ai']],
+    actions:{approve:'PO 4500128702 updated in SAP: delivery 16 Nov, line 2 price accepted. Reply sent to Bavaria Fastener.', escalate:'Escalated to Jonas Weber (buyer) with the price comparison attached.'}
+  },
+  'INV-0917': {
+    id:'INV-0917', cat:'inv', chip:'Invoice', party:'Stalmex Sp. z o.o.', received:'23 Oct 2026, 08:46', via:'Outlook', value:23940, score:71, time:'08:47',
+    q:{line:'Quantity mismatch on line 3', sub:'Invoice 50 drums · Goods receipt 48 · Packing list 48'},
+    autoText:'Invoice posted in SAP',
+    br:[['history match',70],['document completeness',100],['price deviation',100],['delivery date variance',25],['master data quality',60]],
+    formTitle:'Invoice Headers', docFile:'FV_2026_10_0917.pdf', docSub:'PDF invoice · 1 page',
+    fields:[
+      {l:'Invoice Number', v:'FV/2026/10/0917', b:1, pop:{c:99, ex:'FV/2026/10/0917', erp:'Not posted yet'}},
+      {l:'Supplier Name and Code', v:'Stalmex Sp. z o.o. · 200288', b:2, dd:true, pop:{c:99, ex:'Stalmex Sp. z o.o., Sosnowiec', erp:'200288 · Stalmex Sp. z o.o.'}},
+      {l:'PO Number', v:'4500128655'}, {l:'Invoice Date', v:'21 Oct 2026'},
+      {l:'Net Amount', v:'EUR 23,940', b:3, pop:{c:100, ex:'Razem netto 23 940,00 €', erp:'PO net EUR 23,940'}},
+      {l:'Currency', v:'EUR'},
+      {l:'Goods Receipt', v:'5000233981 · 20 Oct 2026', b:4, warn:true, pop:{c:45, ex:'50 drums on the invoice', erp:'48 drums received · 48 on the packing list', note:'Line 3 is short by 2 drums (EUR 181.52). Goods receipt and packing list agree with each other.'}},
+      {l:'Payment Terms', v:'30 days'},
+      {l:'Entity', v:'2110'}, {l:'Email Date', v:'23 Oct 2026 8:46AM'},
+      {l:'Sender Email', v:'faktury@stalmex.pl'}, {l:'Cost Center', v:'Steel service · 4120'} ],
+    linesTitle:'4-Way Match', lines:{cols:['Line','PO','Goods receipt','Packing list','Invoice','Status'], rows:[['1 · Flat bar S235JR 60×8','12,000 kg','12,000 kg','12,000 kg','12,000 kg','Match'],['2 · Angle 50×50×5 S235JR','9,800 kg','9,800 kg','9,800 kg','9,800 kg','Match'],['3 · Welding wire G3Si1, 15 kg drums','50','48','48','50','2 short']], ok:[[0,5],[1,5]], bad:[[2,4],[2,5]], foot:'2 of 3 lines match in all four documents · EUR 19,402 clean · EUR 4,538 on hold'},
+    doc:{kind:'paper', paper:{title:'Faktura VAT FV/2026/10/0917', meta:['Stalmex Sp. z o.o. · ul. Hutnicza 14 · 41-200 Sosnowiec','Nabywca: Nordwerk Industrial Supply GmbH · Zamówienie 4500128655 · 21.10.2026'], cols:['Lp.','Nazwa towaru','Ilość','Cena netto','Wartość'], rows:[['1','Płaskownik S235JR 60×8, dł. 6 m','12 000 kg','0,89 €/kg','10 680,00 €'],['2','Kątownik 50×50×5 S235JR, dł. 6 m','9 800 kg','0,89 €/kg','8 722,00 €'],['3','Drut spawalniczy G3Si1 ø1,0 mm, bęben 15 kg','50 szt','90,76 €','4 538,00 €']], hl:[[2,2],[2,4]], foot:'Razem netto 23 940,00 € · Termin płatności 30 dni'}},
+    emails:[
+      {dir:'out', draft:true, to:'faktury@stalmex.pl', subject:'Invoice FV/2026/10/0917 · line 3 quantity', at:'08:48', body:['Dear Stalmex team,','Your invoice FV/2026/10/0917 lists 50 drums of welding wire G3Si1 on line 3. Our goods receipt 5000233981 and your packing list both show 48. Please send a credit note for 2 drums (EUR 181.52) or confirm a delivery of the shortfall. Lines 1 and 2 are approved for payment.','Kind regards, Jako for Nordwerk Industrial Supply','Szanowni Państwo, faktura FV/2026/10/0917 wykazuje w pozycji 3 50 bębnów drutu G3Si1, a dokument przyjęcia i list przewozowy wskazują 48. Prosimy o korektę na 2 bębny (181,52 EUR) lub dostawę brakującej ilości.']},
+      {dir:'in', from:'Stalmex Faktury <faktury@stalmex.pl>', time:'23 Oct 2026, 08:46', subject:'Faktura FV/2026/10/0917', body:['Dzień dobry,','w załączeniu faktura FV/2026/10/0917 do zamówienia 4500128655.','Pozdrawiamy, Dział Fakturowania'], attach:'FV_2026_10_0917.pdf'} ],
+    log:[['08:46','Email received in rechnungen@ (Outlook) with FV_2026_10_0917.pdf','sys'],['08:47','Classified as Invoice · 99%','ai'],['08:47','3 lines extracted, PO 4500128655 found','ai'],['08:47','4-way match: PO, goods receipt 5000233981, packing list, invoice','ai'],['08:47','Line 3: 50 invoiced, 48 received, 48 on the packing list','ai'],['08:47','Scored 71 < threshold 75 → flagged for review','ai'],['08:48','Credit note request drafted','ai']],
+    actions:{approve:'Lines 1–2 (EUR 19,402) posted in SAP. Line 3 held, claim CL-2026-0412 opened, credit note requested.', escalate:'Escalated to Tobias Lenz (Finance) with the 4-way match attached.'}
+  },
+  'SO-2341': {
+    id:'SO-2341', cat:'so', chip:'New Customer', party:'Officine Bellandi S.r.l.', received:'23 Oct 2026, 09:02', via:'Gmail', value:9120, score:69, time:'09:02',
+    q:{line:'First order, no history available', sub:'Officine Bellandi S.r.l. · 4 lines · EUR 9,120 · 1 material ambiguous'},
+    autoText:'SO-2341 created in SAP',
+    br:[['history match',20],['document completeness',100],['price deviation',96],['delivery date variance',100],['master data quality',29]],
+    formTitle:'PO Headers', docFile:'Ordine_553.xlsx', docSub:'Email in Italian with an Excel attachment',
+    fields:[
+      {l:'PO Number', v:'553', b:1, pop:{c:99, ex:'Ordine n. 553', erp:'New customer reference'}},
+      {l:'Order Date', v:'23 Oct 2026'},
+      {l:'Customer Name and Code', v:'Officine Bellandi S.r.l. · 300871', b:2, dd:true, pop:{c:99, ex:'Officine Bellandi S.r.l., Brescia', erp:'300871 · created 14 Oct 2026'}},
+      {l:'Delivery Address', v:'Via Industriale 44, Brescia'},
+      {l:'City', v:'Brescia'}, {l:'Country', v:'Italy'},
+      {l:'Delivery Date', v:'6 Nov 2026', b:3, pop:{c:100, ex:'entro il 6 novembre', erp:'06/11/2026 · feasible'}},
+      {l:'Net Amount', v:'EUR 9,120', b:4, warn:true, pop:{c:58, ex:'4 lines from Ordine_553.xlsx', erp:'3 of 4 materials matched', note:'“Guarnizione 80mm” matches GSK-80-NBR and GSK-80-EPDM. No order history to decide.'}},
+      {l:'Entity', v:'2110'}, {l:'Email Date', v:'23 Oct 2026 9:02AM'},
+      {l:'Sender Email', v:'acquisti@officinebellandi.it'}, {l:'Currency', v:'EUR'} ],
+    linesTitle:'Line Items', lines:{cols:['Riga','Document line','Matched material','Qty','Match'], rows:[['1','Cuscinetto 6205 2RS','BRG-6205-2RS','120 pz','99%'],['2','Guarnizione 80mm','GSK-80-NBR or GSK-80-EPDM','60 pz','58%'],['3','Vite TCEI M8x40 inox','SCR-M8x40-A2','2,000 pz','97%'],['4','Catena 10B-1 (5 m)','CHN-10B1-5M','10','95%']], hl:[[1,2],[1,4]], foot:'Prices from customer price list 2026 · net EUR 9,120'},
+    doc:{kind:'mail', from:'Marco Ferri <acquisti@officinebellandi.it>', to:'ordini@nordwerk-industrial.it', date:'23 Oct 2026, 09:02', subject:'Ordine n. 553 – materiale per linea 2', body:['Buongiorno,','in allegato il nostro ordine n. 553. Consegna richiesta entro il 6 novembre presso lo stabilimento di Brescia.','Cordiali saluti, Marco Ferri · Ufficio Acquisti'], attach:'Ordine_553.xlsx', attIcon:'sheet',
+      paper:{title:'Ordine_553.xlsx · Foglio1', meta:['Officine Bellandi S.r.l. · Brescia','Consegna richiesta 06/11/2026'], cols:['Riga','Descrizione','Q.tà','Note'], rows:[['1','Cuscinetto 6205 2RS','120 pz',''],['2','Guarnizione 80mm','60 pz','come ultimo ordine'],['3','Vite TCEI M8x40 inox','2000 pz',''],['4','Catena 10B-1 (5 m)','10','']], hl:[[1,1]], foot:''}},
+    emails:[
+      {dir:'out', draft:true, to:'acquisti@officinebellandi.it', subject:'Conferma d’ordine n. 553', at:'09:03', body:['Buongiorno Sig. Ferri,','grazie per l’ordine n. 553. Confermiamo la consegna entro il 6 novembre presso lo stabilimento di Brescia.','Per la riga 2 (guarnizione 80 mm) abbiamo previsto la versione NBR (GSK-80-NBR). Se preferite la versione EPDM, rispondete a questa email entro domani.','Cordiali saluti, Jako per Nordwerk Industrial Supply']},
+      {dir:'in', from:'Marco Ferri <acquisti@officinebellandi.it>', time:'23 Oct 2026, 09:02', subject:'Ordine n. 553 – materiale per linea 2', body:['Buongiorno,','in allegato il nostro ordine n. 553. Consegna richiesta entro il 6 novembre presso lo stabilimento di Brescia.','Cordiali saluti, Marco Ferri'], attach:'Ordine_553.xlsx'} ],
+    log:[['09:02','Email received in ordini@ (Gmail) with Ordine_553.xlsx','sys'],['09:02','Classified as Sales Order, Italian · 99%','ai'],['09:03','4 lines read from Excel, customer 300871 matched','ai'],['09:03','3 of 4 materials matched; line 2 ambiguous (NBR / EPDM)','ai'],['09:03','New customer: no order history · scored 69 < threshold 75 → flagged','ai'],['09:03','Order confirmation drafted in Italian','ai']],
+    actions:{approve:'SO-2341 created in SAP with GSK-80-NBR. Order confirmation sent to Marco Ferri.', escalate:'Escalated to Sofia Rinaldi (account manager) to confirm the gasket with the customer.'}
+  },
+  'PO-5102': {
+    id:'PO-5102', cat:'poupd', chip:'PO Update', party:'Leuven Tool & Carbide NV', received:'23 Oct 2026, 08:31', via:'Outlook', value:12780, score:84, time:'08:31',
+    q:{line:'Delivery date moved +8 days', sub:'Inserts 29 Oct (was 21 Oct) · SO-2210 for Mertens promised 30 Oct'},
+    autoText:'PO 4500128690 updated in SAP', autoAt:'08:32',
+    br:[['history match',90],['document completeness',95],['price deviation',100],['delivery date variance',48],['master data quality',87]],
+    formTitle:'PO Headers', docFile:'email thread', docSub:'Chaser sent by Jako on 20 Oct, reply this morning',
+    fields:[
+      {l:'PO Number', v:'PO-5102 · 4500128690'},
+      {l:'Supplier Name and Code', v:'Leuven Tool & Carbide NV · 200377', b:1, dd:true, pop:{c:99, ex:'An De Wilde, Leuven Tool & Carbide NV', erp:'200377 · Leuven Tool & Carbide NV'}},
+      {l:'New Delivery Date', v:'Inserts: 29 Oct 2026', b:2, warn:true, pop:{c:90, ex:'ship 28 October, arriving 29 October', erp:'21 Oct 2026 on the PO', note:'+8 days on line 2. SO-2210 (Mertens) promised 30 Oct keeps one day of buffer.'}},
+      {l:'Partial Shipment', v:'Holder sets: today, 23 Oct', b:3, pop:{c:93, ex:'can ship today as a partial delivery', erp:'Line 1 · 12 holder sets'}},
+      {l:'Affected Customer Order', v:'SO-2210 · Mertens Maschinenbau'}, {l:'Stock Cover', v:'24 inserts in Dortmund'},
+      {l:'Order Date', v:'6 Oct 2026'}, {l:'Buyer', v:'Jonas Weber'},
+      {l:'Entity', v:'2110'}, {l:'Email Date', v:'23 Oct 2026 8:31AM'},
+      {l:'Sender Email', v:'an.dewilde@leuventool.be'}, {l:'Incoterms', v:'DAP Dortmund'} ],
+    linesTitle:'Line Items', lines:{cols:['Line','Item','Qty','PO date','New date','Status'], rows:[['1','Tool holder set CNMG','12','21 Oct','23 Oct','+2 days'],['2','Inserts CNMG 120408','40','21 Oct','29 Oct','+8 days']], hl:[[1,4],[1,5]], foot:'SO-2210 for Mertens promised 30 Oct · 24 inserts on stock cover the first delivery'},
+    doc:{kind:'thread', msgs:[
+      {me:true, from:'Jako · for Jonas Weber', time:'20 Oct, 16:05', body:['Dear Leuven Tool team,','our purchase order 4500128690 (12 holder sets and 40 CNMG 120408 inserts) is due tomorrow, 21 October, and we have no shipping notice yet. Could you confirm the dispatch date and the tracking number?','Kind regards, Jako for Nordwerk Industrial Supply']},
+      {from:'An De Wilde · Leuven Tool & Carbide NV', time:'23 Oct, 08:31', body:['Hello,','apologies for the delay. The CNMG 120408 inserts are on backorder from our grinding plant. We can ship the full quantity on 28 October, arriving 29 October. The 12 holder sets are ready and can ship today as a partial delivery if you prefer.','Best regards, An']} ]},
+    emails:[
+      {dir:'out', draft:true, to:'an.dewilde@leuventool.be', subject:'Re: Delivery status PO 4500128690', at:'08:32', body:['Thanks, An. Please ship the 12 holder sets today and the inserts on 28 October, and send both tracking numbers to this address.','Kind regards, Jako for Nordwerk Industrial Supply']},
+      {dir:'out', sentAt:'20 Oct, 16:05', to:'orders@leuventool.be', subject:'Delivery status for PO 4500128690 (due 21 Oct)', body:['Dear Leuven Tool team,','our purchase order 4500128690 (12 holder sets and 40 CNMG 120408 inserts) is due tomorrow, 21 October, and we have no shipping notice yet. Could you confirm the dispatch date and the tracking number?','Kind regards, Jako for Nordwerk Industrial Supply']},
+      {dir:'in', from:'An De Wilde <an.dewilde@leuventool.be>', time:'23 Oct 2026, 08:31', subject:'Re: Delivery status for PO 4500128690', body:['Hello,','apologies for the delay. The CNMG 120408 inserts are on backorder from our grinding plant. We can ship the full quantity on 28 October, arriving 29 October. The 12 holder sets are ready and can ship today.','Best regards, An']} ],
+    log:[['20 Oct','Chaser sent to Leuven Tool: PO due 21 Oct with no notice','ai'],['08:31','Reply received, classified as PO Update · 99%','ai'],['08:31','New dates read: holders today, inserts 29 Oct','ai'],['08:32','Linked to SO-2210 (Mertens), stock checked in Dortmund','ai'],['08:32','Scored 84 ≥ threshold 75 → auto-execute','ai'],['08:32','PO 4500128690 updated in SAP, reply drafted','ai']],
+    actions:{approve:'PO 4500128690 updated in SAP with the split delivery. Reply sent to An De Wilde, Sofia Rinaldi informed about SO-2210.', escalate:'Escalated to Jonas Weber to decide on an alternative source.'}
+  },
+};
+const QUEUE = ['PO-5138', 'SO-2341', 'INV-0917', 'PO-5102'];
+const ORDER_ROWS = [
+  ['23 Oct 2026','SO-2341','Officine Bellandi S.r.l.','so','Sales Order',9120,69],
+  ['23 Oct 2026','PO-5138','Bavaria Fastener Systems AG','poconf','PO Confirmation',47820,67],
+  ['23 Oct 2026','INV-0917','Stalmex Sp. z o.o.','inv','Invoice',23940,71],
+  ['23 Oct 2026','PO-5102','Leuven Tool & Carbide NV','poupd','PO Update',12780,84],
+  ['22 Oct 2026','SO-2340','Mertens Maschinenbau GmbH','so','Sales Order',1248,87],
+  ['22 Oct 2026','PO-5097','Alpine Bearings GmbH','poconf','PO Confirmation',8460,99],
+  ['22 Oct 2026','SO-2338','Haller Metallbau GmbH','so','Sales Order',4980,96],
+  ['22 Oct 2026','INV-0931','Stalmex Sp. z o.o.','inv','Invoice',11200,95],
+  ['21 Oct 2026','SO-2335','Koninklijke Van Dijk Constructie B.V.','so','Sales Order',6730,95],
+  ['21 Oct 2026','INV-4471','Dutch Valve Works B.V.','inv','Invoice',7812,95],
+];
+const EMAIL_IN = [
+  ['23 Oct 2026 09:12','auftrag@bavaria-fastener.de','einkauf@nordwerk-industrial.de','Auftragsbestätigung AB-77120','Outlook','poconf',67,'PO-5138'],
+  ['23 Oct 2026 09:02','acquisti@officinebellandi.it','ordini@nordwerk-industrial.it','Ordine n. 553 – materiale per linea 2','Gmail','so',69,'SO-2341'],
+  ['23 Oct 2026 08:47','faktury@stalmex.pl','rechnungen@nordwerk-industrial.de','Faktura FV/2026/10/0917','Outlook','inv',71,'INV-0917'],
+  ['23 Oct 2026 08:31','an.dewilde@leuventool.be','einkauf@nordwerk-industrial.de','Re: Delivery status PO 4500128690','Outlook','poupd',84,'PO-5102'],
+  ['22 Oct 2026 14:28','einkauf@mertens-maschinenbau.de','orders@nordwerk-industrial.de','Bestellung 7781','Outlook','so',87,'SO-2340'],
+  ['22 Oct 2026 11:05','edi@alpine-bearings.at','edi@nordwerk-industrial.de','ORDRSP · PO 4500128801','EDI','poconf',99,null],
+  ['22 Oct 2026 10:40','auftrag@haller-metallbau.de','orders@nordwerk-industrial.de','Auftrag 2026-311','Gmail','so',96,null],
+  ['21 Oct 2026 16:12','dispo@voss-logistik.de','einkauf@nordwerk-industrial.de','ETA update · shipment 5519','Outlook','oth',90,null],
+  ['21 Oct 2026 09:30','billing@dutchvalveworks.nl','rechnungen@nordwerk-industrial.de','Invoice 2026-4471','Outlook','inv',95,null],
+  ['20 Oct 2026 15:48','orders@vandijk-constructie.nl','orders@nordwerk-industrial.de','Order 88-2026','Gmail','so',95,null],
+];
+const EMAIL_OUT = [
+  ['23 Oct 2026 09:13','jako@nordwerk-industrial.de','auftrag@bavaria-fastener.de','Re: Auftragsbestätigung AB-77120','Outlook','poconf','Draft','PO-5138'],
+  ['23 Oct 2026 09:03','jako@nordwerk-industrial.de','acquisti@officinebellandi.it','Conferma d’ordine n. 553','Gmail','so','Draft','SO-2341'],
+  ['23 Oct 2026 08:48','jako@nordwerk-industrial.de','faktury@stalmex.pl','Invoice FV/2026/10/0917 · line 3 quantity','Outlook','inv','Draft','INV-0917'],
+  ['22 Oct 2026 14:30','jako@nordwerk-industrial.de','einkauf@mertens-maschinenbau.de','Auftragsbestätigung SO-2340','Outlook','so','Draft','SO-2340'],
+  ['20 Oct 2026 16:05','jako@nordwerk-industrial.de','orders@leuventool.be','Delivery status for PO 4500128690','Outlook','poupd','Sent','PO-5102'],
+  ['20 Oct 2026 11:20','jako@nordwerk-industrial.de','zamowienia@stalmex.pl','Delivery status for PO 4500128660','Outlook','oth','Sent',null],
+  ['19 Oct 2026 15:48','jako@nordwerk-industrial.de','acquisti@officinebellandi.it','Conferma d’ordine n. 549','Gmail','so','Sent',null],
+];
+const READINESS = [
+  ['Rheinstahl Werke GmbH',412,97,96,'Autopilot'],['Alpine Bearings GmbH',388,96,97,'Autopilot'],['Stalmex Sp. z o.o.',196,88,91,'Autopilot'],
+  ['Bavaria Fastener Systems AG',240,81,86,'Learning'],['Leuven Tool & Carbide NV',88,79,84,'Learning'],['Voss Logistik GmbH',150,90,93,'Autopilot'],['Dutch Valve Works B.V.',41,58,71,'Review'],
+];
+const AUDIT = [
+  ['09:14','SO-2338 confirmation sent to Haller Metallbau','Jako','96'],['09:08','PO 4500128801 confirmed dates written to SAP','Jako','99'],['08:52','INV-0931 posted in SAP (MIRO), 3 of 3 lines matched','Jako','95'],
+  ['08:32','PO 4500128690 delivery dates updated (split delivery)','Jako','84'],['08:20','Chaser sent to Stalmex for PO 4500128660','Jako','—'],['08:05','SO-2335 created in SAP for Van Dijk Constructie','Jako','95'],
+  ['22 Oct','SO-2340 created in SAP for Mertens Maschinenbau','Jako','87'],['22 Oct','Goods receipt 5000234102 posted (Dutch Valve Works)','Jako','98'],
+];
+const WEEKS = [74,79,84,88,90,91,93,95,96];
+
+/* ------------------------------------------------------------------ state ------------------------------------------------------------------ */
+let savedLang = 'en'; try { savedLang = localStorage.getItem('jako-lang') || 'en'; } catch (e) {}
+const state = { lang:savedLang === 'he' ? 'he' : 'en', thr:75, ap:true, view:'cockpit', navKey:'cockpit', cktab:'queue', eseg:'inbound', cat:null, order:null, otab:'details', done:{}, sent:{}, audit:[], editing:false, clock:9*60+41 };
+const el = { nav:$('#nav'), crumb:$('#crumb'), ap:$('#apSwitch'), side:$('#side'), scrim:$('#scrim'), toast:$('#toast'), lang:$('#langBtn'), demo:$('#demoChip'), apLabel:$('#apLabel'), foot:$('#sideFoot') };
+const V = { cockpit:$('#v-cockpit'), email:$('#v-email'), orders:$('#v-orders'), order:$('#v-order'), settings:$('#v-settings') };
+function now() { const h = Math.floor(state.clock / 60), m = state.clock % 60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
+function tick() { state.clock += 1 + Math.floor(Math.random() * 2); return now(); }
+const isAuto = o => state.ap && o.score >= state.thr;
+const flagged = () => QUEUE.filter(id => !state.done[id] && !isAuto(ORDERS[id]));
+let toastT; function toast(html) { el.toast.innerHTML = html; el.toast.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.toast.classList.remove('show'), 4000); }
+const who = () => t('Maren Köhler');
+
+/* ------------------------------------------------------------------ language ------------------------------------------------------------------ */
+function applyLang() {
+  const he = state.lang === 'he';
+  document.documentElement.setAttribute('dir', he ? 'rtl' : 'ltr');
+  document.documentElement.setAttribute('lang', he ? 'he' : 'en');
+  el.lang.textContent = he ? 'English' : 'עברית';
+  el.lang.setAttribute('aria-label', he ? 'Switch to English' : 'עבור לעברית');
+  el.demo.textContent = t('Demo · simulated data');
+  el.apLabel.textContent = t('AutoPilot');
+  el.foot.innerHTML = `<b>Nordwerk Industrial Supply GmbH</b><span><i class="dot"></i>${t('SAP S/4HANA · connected')}</span><span><i class="dot"></i>${t('Outlook · Gmail · EDI')}</span>`;
+  renderNav();
+}
+el.lang.addEventListener('click', () => { state.lang = state.lang === 'he' ? 'en' : 'he'; try { localStorage.setItem('jako-lang', state.lang); } catch (e) {} applyLang(); rerender(); });
+
+/* ------------------------------------------------------------------ nav & views ------------------------------------------------------------------ */
+const NAV = [['cockpit','Autopilot Cockpit','cockpit'],['email','Email','mail'],['orders','Orders','orders'],['suppliers','Suppliers','suppliers'],['settings','Settings','settings']];
+function renderNav() { el.nav.innerHTML = NAV.map(n => `<a href="#${n[0]}" data-nav="${n[0]}" class="${state.navKey === n[0] ? 'on' : ''}">${I[n[2]]}${t(n[1])}</a>`).join(''); }
+el.nav.addEventListener('click', e => { const a = e.target.closest('[data-nav]'); if (!a) return; e.preventDefault(); go(a.dataset.nav); closeSide(); });
+function closeSide() { el.side.classList.remove('open'); el.scrim.classList.remove('open'); }
+$('#menuBtn').addEventListener('click', () => { el.side.classList.toggle('open'); el.scrim.classList.toggle('open', el.side.classList.contains('open')); });
+el.scrim.addEventListener('click', closeSide);
+const TITLES = { cockpit:'Autopilot Cockpit', email:'Email', orders:'Orders', settings:'Settings', suppliers:'Suppliers' };
+function go(key) {
+  if (ORDERS[key]) { openOrder(key); return; }
+  if (key === 'suppliers') { state.cktab = 'readiness'; show('cockpit', 'suppliers'); return; }
+  if (key === 'cockpit' && state.navKey === 'suppliers') state.cktab = 'queue';
+  show(TITLES[key] ? key : 'cockpit', TITLES[key] ? key : 'cockpit');
+}
+function show(view, navKey) {
+  state.view = view; state.navKey = navKey;
+  Object.entries(V).forEach(([k, s]) => s.hidden = k !== view);
+  $$('[data-nav]').forEach(a => a.classList.toggle('on', a.dataset.nav === navKey));
+  el.crumb.innerHTML = t(TITLES[navKey]);
+  ({cockpit:renderCockpit, email:renderEmail, orders:renderOrders, settings:renderSettings})[view]?.();
+  try { if (location.hash !== '#' + navKey) history.replaceState(null, '', '#' + navKey); } catch (e) {}
+  window.scrollTo({top:0, behavior:'auto'});
+}
+window.addEventListener('hashchange', () => go(location.hash.slice(1) || 'cockpit'));
+function rerender() { if (state.view === 'order' && state.order) openOrder(state.order, true); else show(state.view, state.navKey); }
+
+/* ------------------------------------------------------------------ AutoPilot switch ------------------------------------------------------------------ */
+function setAp(on) {
+  state.ap = on; el.ap.classList.toggle('on', on); el.ap.setAttribute('aria-checked', String(on));
+  toast(on ? t('<b>AutoPilot on.</b> Transactions above the threshold run on their own.') : t('<b>AutoPilot off.</b> Every transaction waits for review.'));
+  rerender();
+}
+el.ap.addEventListener('click', () => setAp(!state.ap));
+
+/* ------------------------------------------------------------------ cockpit ------------------------------------------------------------------ */
+function qcard(o) {
+  return `<div class="qcard" data-id="${o.id}">
+    <div class="qc-top"><span class="chip">${t(o.chip)}</span><span class="time">${o.time} ${t('today')}</span></div>
+    <div class="qc-id">${o.id}</div>
+    <div class="qc-line">${t(o.q.line)}</div>
+    <div class="qc-sub">${t(o.q.sub)}</div>
+    <div class="qc-foot"><span class="conf ${confCls(o.score)}">${o.score}%</span><div class="r"><button class="btn ghost sm" data-act="open" data-id="${o.id}">${t('Open')}</button><button class="btn ghost sm" data-act="escalate" data-id="${o.id}">${t('Escalate')}</button><button class="btn primary sm" data-act="approve" data-id="${o.id}">${t('Approve')}</button></div></div>
+  </div>`;
+}
+function renderCockpit() {
+  const f = flagged();
+  const rate = state.ap ? '91%' : t('Paused');
+  const need = f.length === 1 ? t('1 transaction needs attention') : tf('{n} transactions need attention', {n:f.length});
+  V.cockpit.innerHTML = `<div class="card">
+    <div class="card-h"><h1>${t('Autopilot Cockpit')}</h1></div>
+    <div class="tabs">${[['queue','Review Queue'],['readiness','Supplier Readiness'],['audit','Audit Trail']].map(x => `<button class="tab${state.cktab === x[0] ? ' on' : ''}" data-cktab="${x[0]}">${t(x[1])}</button>`).join('')}</div>
+    <div class="tiles">
+      <div class="tile"><div class="l">${t('Autopilot rate')}</div><div class="v">${rate}</div></div>
+      <div class="tile"><div class="l">${t('Actions today')}</div><div class="v">1,183</div></div>
+      <div class="tile"><div class="l">${t('Avg decision')}</div><div class="v">0.4s</div></div>
+      <div class="tile"><div class="l">${t('Accuracy')}</div><div class="v">98.4%</div></div>
+    </div>
+    <div class="pane" ${state.cktab === 'queue' ? '' : 'hidden'}>
+      <div class="split">
+        <div class="flagbox">
+          <div class="flag-h"><span>${t('Flagged for Review')} · ${need}</span><button class="btn primary sm" id="approveAll" ${f.length ? '' : 'disabled'}>${t('Approve All')}</button></div>
+          <div class="qcards" id="qcards">${f.length ? f.map(id => qcard(ORDERS[id])).join('') : `<div class="empty">${t('Nothing flagged. Jako is running on its own and will flag anything below the threshold.')}</div>`}</div>
+          <div class="auto-note">${t('Auto-executed today:')} <b>1,183 ${t('transactions')}</b> · ${t('threshold')} <b>${state.thr}</b> · ${t('last:')} <b>SO-2338</b> 09:14 (96%)</div>
+        </div>
+        <div class="card sub"><div class="sub-h">${t('Autopilot Confidence')}<span>${t('Weeks since go-live')}</span></div><svg class="chart" id="chart" viewBox="0 0 520 300" aria-label="Autopilot confidence rising from 74 to 96 percent over eight weeks"></svg></div>
+      </div>
+    </div>
+    <div class="pane" ${state.cktab === 'readiness' ? '' : 'hidden'}>
+      <div class="tbl-wrap"><table class="rtbl"><thead><tr><th>${t('Supplier')}</th><th>${t('Transactions (30d)')}</th><th>${t('Autopilot')}</th><th>${t('Avg confidence')}</th><th>${t('Readiness')}</th><th>${t('Status')}</th></tr></thead><tbody>
+      ${READINESS.map(r => `<tr><td style="color:var(--ink);font-weight:500">${r[0]}</td><td>${fmt(r[1])}</td><td>${r[2]}%</td><td>${r[3]}</td><td><span class="bar"><i style="width:${r[3]}%"></i></span>${r[3]}%</td><td><span class="chip ${r[4] === 'Autopilot' ? 'c-poupd' : (r[4] === 'Learning' ? 'c-poconf' : 'c-inv')}">${t(r[4])}</span></td></tr>`).join('')}
+      </tbody></table></div>
+    </div>
+    <div class="pane" ${state.cktab === 'audit' ? '' : 'hidden'}>
+      <ul class="audit">${[...state.audit, ...AUDIT].map(a => `<li><span class="t">${t(a[0])}</span><span><b>${t(a[1])}</b></span><span class="who">${t(a[2])}${a[3] !== '—' ? ` · ${a[3]}%` : ''}</span></li>`).join('')}</ul>
+    </div>
+  </div>`;
+  renderChart();
+  $$('[data-cktab]', V.cockpit).forEach(b => b.addEventListener('click', () => { state.cktab = b.dataset.cktab; renderCockpit(); }));
+  $('#approveAll', V.cockpit).addEventListener('click', approveAll);
+  $('#qcards', V.cockpit).addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const id = b.dataset.id;
+    if (b.dataset.act === 'open') openOrder(id);
+    else decide(id, b.dataset.act, b.closest('.qcard'));
+  });
+}
+function auditLine(o, act) { return [tick(), `${o.id} ${t(act === 'approve' ? 'approved' : 'escalated')} · ${t(act === 'approve' ? o.actions.approve : o.actions.escalate)}`, who(), String(o.score)]; }
+function decide(id, act, card) {
+  const o = ORDERS[id];
+  state.done[id] = act;
+  state.audit.unshift(auditLine(o, act));
+  toast(`<b>${tf(act === 'approve' ? '{id} approved.' : '{id} escalated.', {id:o.id})}</b> ${t(act === 'approve' ? o.actions.approve : o.actions.escalate)}`);
+  if (card && !reduced) { card.classList.add('out'); setTimeout(renderCockpit, 320); } else renderCockpit();
+}
+async function approveAll() {
+  const ids = flagged(); if (!ids.length) return;
+  $('#approveAll').disabled = true;
+  for (const id of ids) {
+    const card = $(`.qcard[data-id="${id}"]`); const o = ORDERS[id];
+    state.done[id] = 'approve';
+    state.audit.unshift(auditLine(o, 'approve'));
+    if (card) { card.classList.add('out'); await wait(reduced ? 0 : 260); }
+  }
+  toast(`<b>${tf('{n} transactions approved', {n:ids.length})}</b> ${t('and synced to SAP.')}`);
+  renderCockpit();
+}
+function renderChart() {
+  const s = $('#chart'); if (!s) return;
+  const W = 520, H = 300, L = 54, R = 24, T = 26, B = 56, pw = W - L - R, ph = H - T - B;
+  const y = v => T + ph - v / 100 * ph, xs = WEEKS.map((_, i) => L + i * pw / (WEEKS.length - 1));
+  let g = '';
+  [0,20,40,60,80,100].forEach(v => { g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v}%</text>`; });
+  const pts = WEEKS.map((v, i) => `${xs[i].toFixed(1)},${y(v).toFixed(1)}`);
+  let d = `M${pts[0]}`;
+  for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1].split(','), [x1, y1] = pts[i].split(','); const cx = ((+x0) + (+x1)) / 2; d += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`; }
+  g += `<path class="ln" d="${d}"/>`;
+  WEEKS.forEach((v, i) => { g += `<text class="ax" x="${xs[i]}" y="${H - 30}" text-anchor="middle">W${i}</text>`; });
+  [[2,'below'],[5,'above'],[7,'below']].forEach(([i, pos]) => {
+    const x = xs[i], yy = y(WEEKS[i]);
+    g += `<circle class="pt" cx="${x}" cy="${yy}" r="4.5"><title>W${i}: ${WEEKS[i]}%</title></circle>`;
+    const ly = pos === 'above' ? yy - 36 : yy + 16;
+    g += `<rect class="lbb" x="${x - 26}" y="${ly}" width="52" height="24" rx="4"/><text class="lb" x="${x}" y="${ly + 17}" text-anchor="middle">${WEEKS[i]}%</text>`;
+  });
+  g += `<text class="ax" x="${L + pw / 2}" y="${H - 8}" text-anchor="middle">${t('Weeks')}</text><text class="ax" transform="translate(14 ${T + ph / 2}) rotate(-90)" text-anchor="middle">${t('Autopilot Confidence')}</text>`;
+  s.innerHTML = g;
+}
+
+/* ------------------------------------------------------------------ email ------------------------------------------------------------------ */
+function renderEmail() {
+  const rowsIn = state.eseg === 'open' ? EMAIL_IN.filter(r => r[7] && flagged().includes(r[7])) : EMAIL_IN;
+  const rows = (state.eseg === 'outbound' ? EMAIL_OUT : rowsIn).filter(r => !state.cat || r[5] === state.cat);
+  const out = state.eseg === 'outbound';
+  V.email.innerHTML = `<div class="card">
+    <div class="card-h">${I.panel}<h1>${t('Email')}</h1></div>
+    <div class="seg">${[['open','Open Actions'],['inbound','Inbound'],['outbound','Outbound']].map(s => `<button class="${state.eseg === s[0] ? 'on' : ''}" data-seg="${s[0]}">${t(s[1])}</button>`).join('')}</div>
+    <div class="tiles">
+      <div class="tile"><div class="l">${t('Total')}</div><div class="v">714</div></div>
+      <div class="tile"><div class="l">${I.inbox}Outlook</div><div class="v">402</div></div>
+      <div class="tile"><div class="l">${I.inbox}Gmail</div><div class="v">231</div></div>
+      <div class="tile"><div class="l">${I.file}EDI</div><div class="v">81</div></div>
+    </div>
+    <div class="toolbar">
+      <label class="search">${I.search}<input type="search" id="emailSearch" placeholder="${t('Search...')}" aria-label="${t('Search...')}"></label>
+      <button class="dd">${t('Source')} ${I.chev}</button><button class="dd">${t('Mailbox')} ${I.chev}</button>
+      <button class="dd${state.cat ? ' on' : ''}" id="catBtn" aria-expanded="false">${state.cat ? t(CAT[state.cat]) : t('Category')} ${I.chev}</button>
+      <div class="catpop" id="catPop" hidden><div class="cp-h">${t('Category')} ${I.sort}</div>${Object.entries(CAT).map(([k, v]) => `<span class="chip c-${k}" data-cat="${k}" role="button" tabindex="0">${t(v)} ${I.chev}</span>`).join('')}<span class="chip" data-cat="" role="button" tabindex="0">${t('All categories')}</span></div>
+    </div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th><span class="cb"></span></th><th>${t('Date')} ${I.sort}</th><th>${t('Sender')} ${I.sort}</th><th>${t('Receiver')}</th><th>${t('Subject')}</th><th>${t('Source')}</th><th>${t('Category')} ${I.sort}</th><th>${out ? t('Status') : t('confidence')} ${I.sort}</th></tr></thead><tbody id="emailRows">
+    ${rows.length ? rows.map(r => `<tr class="${r[7] ? 'row' : ''}" data-order="${r[7] || ''}"><td><span class="cb"></span></td><td class="date">${r[0]}</td><td class="ell">${r[1]}</td><td class="ell">${r[2]}</td><td class="ell" style="max-width:240px;color:var(--ink)">${r[3]}</td><td><span class="src">${SRC_ICON[r[4]]}${r[4]}</span></td><td><span class="chip c-${r[5]}">${t(CAT[r[5]])}</span></td><td>${out ? `<span class="conf ${r[6] === 'Sent' ? 'hi' : 'mid'}">${t(r[6])}</span>` : `<span class="conf ${confCls(r[6])}">${r[6]}%</span>`}</td></tr>`).join('') : `<tr><td colspan="8" class="empty">${t('No emails in this view.')}</td></tr>`}
+    </tbody></table></div>
+  </div>`;
+  $$('[data-seg]', V.email).forEach(b => b.addEventListener('click', () => { state.eseg = b.dataset.seg; renderEmail(); }));
+  const pop = $('#catPop', V.email), btn = $('#catBtn', V.email);
+  btn.addEventListener('click', () => {
+    pop.hidden = !pop.hidden; btn.setAttribute('aria-expanded', String(!pop.hidden));
+    const pw = btn.offsetParent ? btn.offsetParent.clientWidth : 0;
+    if (state.lang === 'he') { pop.style.insetInlineStart = 'auto'; pop.style.right = Math.max(0, pw - btn.offsetLeft - btn.offsetWidth) + 'px'; pop.style.left = 'auto'; }
+    else { pop.style.right = 'auto'; pop.style.left = Math.min(btn.offsetLeft, Math.max(0, pw - 220)) + 'px'; }
+  });
+  pop.addEventListener('click', e => { const c = e.target.closest('[data-cat]'); if (!c) return; state.cat = c.dataset.cat || null; renderEmail(); });
+  pop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); } });
+  $('#emailRows', V.email).addEventListener('click', e => { const tr = e.target.closest('tr.row'); if (tr && tr.dataset.order) openOrder(tr.dataset.order); });
+  $('#emailSearch', V.email).addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    $$('#emailRows tr', V.email).forEach(tr => tr.hidden = q && !tr.textContent.toLowerCase().includes(q));
+  });
+}
+document.addEventListener('click', e => { const pop = $('#catPop'); if (pop && !pop.hidden && !e.target.closest('#catPop') && !e.target.closest('#catBtn')) pop.hidden = true; });
+
+/* ------------------------------------------------------------------ orders ------------------------------------------------------------------ */
+function statusOf(id, score) {
+  const o = ORDERS[id];
+  if (o && state.done[id]) return state.done[id] === 'approve' ? ['Approved', 'hi'] : ['Escalated', 'lo'];
+  const auto = o ? isAuto(o) : (state.ap && score >= state.thr);
+  return auto ? ['Auto-executed', 'hi'] : ['Flagged', 'mid'];
+}
+function renderOrders() {
+  V.orders.innerHTML = `<div class="card">
+    <div class="card-h">${I.orders}<h1>${t('Orders')}</h1></div>
+    <div class="seg"><button class="on">${t('All')}</button><button>${t('Sales orders')}</button><button>${t('Purchase orders')}</button><button>${t('Invoices')}</button></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th><span class="cb"></span></th><th>${t('Date')} ${I.sort}</th><th>${t('Order')} ${I.sort}</th><th>${t('Counterparty')}</th><th>${t('Type')}</th><th>${t('Value')}</th><th>${t('confidence')} ${I.sort}</th><th>${t('Status')}</th></tr></thead><tbody>
+    ${ORDER_ROWS.map(r => { const st = statusOf(r[1], r[6]); return `<tr class="${ORDERS[r[1]] ? 'row' : ''}" data-order="${ORDERS[r[1]] ? r[1] : ''}"><td><span class="cb"></span></td><td class="date">${r[0]}</td><td style="color:var(--ink);font-weight:500">${r[1]}</td><td class="ell" style="max-width:220px">${r[2]}</td><td><span class="chip c-${r[3]}">${t(r[4])}</span></td><td class="num">EUR ${fmt(r[5])}</td><td><span class="conf ${confCls(r[6])}">${r[6]}%</span></td><td><span class="conf ${st[1]}">${t(st[0])}</span></td></tr>`; }).join('')}
+    </tbody></table></div>
+  </div>`;
+  $$('.seg button', V.orders).forEach((b, i, all) => b.addEventListener('click', () => { all.forEach(x => x.classList.remove('on')); b.classList.add('on'); const f = ['', 'so', 'po', 'inv'][i]; $$('tbody tr', V.orders).forEach(tr => { const c = $('.chip', tr).className; tr.hidden = f && !(f === 'po' ? /c-po/.test(c) : c.includes('c-' + f)); }); }));
+  $('tbody', V.orders).addEventListener('click', e => { const tr = e.target.closest('tr.row'); if (tr && tr.dataset.order) openOrder(tr.dataset.order); });
+}
+
+/* ------------------------------------------------------------------ order details ------------------------------------------------------------------ */
+function popHTML(p, warn) {
+  return `<div class="popover" role="tooltip"><div><b>${t('AI Confidence:')}</b> <span class="gchip${warn ? ' mid' : ''}">${p.c}%</span></div><div><b>${t('Extracted:')}</b> ${t(p.ex)}</div><div><b>ERP:</b> ${t(p.erp)}</div><div class="pnote${warn ? ' mid' : ''}">${warn ? I.alert : I.checkc}<span>${t(p.note || 'Jako extracted this value with high accuracy and high confidence.')}</span></div></div>`;
+}
+function fieldHTML(f, i) {
+  const ext = f.b ? ' ext' : '', warn = f.warn ? ' warn' : '';
+  return `<div class="field${ext}${warn}" data-i="${i}" ${f.b ? `data-b="${f.b}" tabindex="0"` : ''}>
+    <label>${t(f.l)} <i class="info" aria-hidden="true">i</i></label>
+    <div class="inp"><span class="val" data-i="${i}">${f.v}</span>${f.b ? `<span class="nb">${f.b}</span>` : ''}${f.dd ? I.chev.replace('class="ic"', 'class="chev"') : ''}</div>
+  </div>`;
+}
+function docHTML(o) {
+  const d = o.doc;
+  if (d.kind === 'hand') return `<div class="hand ltr">${d.blocks.map(b => `<div class="hb" data-b="${b.b}"><span class="tag">${b.b} · ${t(b.t)}</span><span class="pct">${b.c}%</span><p>${b.txt}</p></div>`).join('')}<p class="hand-free">${d.free}</p></div>`;
+  if (d.kind === 'thread') return `<div class="thread ltr">${d.msgs.map(m => `<div class="msg${m.me ? ' me' : ''}"><div class="mh"><b>${m.from}</b><span>${m.time}</span></div><div class="mb">${m.body.map(p => `<p>${p}</p>`).join('')}</div></div>`).join('')}</div>`;
+  let out = '';
+  if (d.kind === 'mail') out += `<div class="mail ltr"><div class="hdr"><b>From</b><span>${d.from}</span><b>To</b><span>${d.to}</span><b>Date</b><span>${d.date}</span></div><div class="subj">${d.subject}</div><div class="body">${d.body.map(p => `<p>${p}</p>`).join('')}</div>${d.attach ? `<div class="att">${I[d.attIcon || 'file']}${d.attach}</div>` : ''}</div>`;
+  if (d.paper) { const p = d.paper, hl = new Set((p.hl || []).map(x => x.join(':')));
+    out += `<div class="paper ltr"><div class="pt">${p.title}</div><div class="pm">${p.meta.map(m => `<span>${m}</span>`).join('')}</div><div class="ptab-wrap"><table class="ptab"><thead><tr>${p.cols.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${p.rows.map((r, ri) => `<tr>${r.map((c, ci) => `<td class="${hl.has(ri + ':' + ci) ? 'hl' : ''}">${c}</td>`).join('')}</tr>`).join('')}</tbody>${p.foot ? `<tfoot><tr><td colspan="${p.cols.length}">${p.foot}</td></tr></tfoot>` : ''}</table></div></div>`; }
+  return out;
+}
+function linesHTML(o) {
+  const L = o.lines, hl = new Set((L.hl || []).map(x => x.join(':'))), ok = new Set((L.ok || []).map(x => x.join(':'))), bad = new Set((L.bad || []).map(x => x.join(':')));
+  return `<div class="lines-wrap"><table class="lines"><thead><tr>${L.cols.map(c => `<th>${t(c)}</th>`).join('')}</tr></thead><tbody>${L.rows.map((r, ri) => `<tr>${r.map((c, ci) => `<td class="${String(c).length > 18 ? 'wrap ' : ''}${hl.has(ri + ':' + ci) ? 'hl' : ''}${ok.has(ri + ':' + ci) ? 'ok' : ''}${bad.has(ri + ':' + ci) ? 'bad' : ''}">${t(c)}</td>`).join('')}</tr>`).join('')}</tbody>${L.foot ? `<tfoot><tr><td colspan="${L.cols.length}">${t(L.foot)}</td></tr></tfoot>` : ''}</table></div>`;
+}
+function confHTML(o) {
+  return `<div class="cf">
+    <div class="big"><span class="score">${o.score}</span><span class="of">/100</span></div>
+    <div class="bar"><i style="width:${o.score}%"></i></div>
+    <div class="thr-l">${t('Threshold:')} <b id="cfThr">${state.thr}</b></div>
+    <hr>
+    <div class="rows">${o.br.map(r => `<div class="r${r[1] < 75 ? ' low' : ''}"><span>${t(r[0])}</span><div class="bar"><i style="width:${r[1]}%"></i></div><b>${r[1]}</b></div>`).join('')}</div>
+    <hr>
+    <div class="thr-row"><span>${t('Autopilot threshold')}</span><b id="cfThr2">${state.thr}</b></div>
+    <input type="range" id="cfRange" min="50" max="99" value="${state.thr}" aria-label="${t('Autopilot threshold')}">
+    <div class="formula" id="formula">${formulaHTML(o)}</div>
+  </div>`;
+}
+function formulaHTML(o) {
+  const auto = isAuto(o);
+  const arrow = state.lang === 'he' ? '←' : '→';
+  return `<span class="fchip rose">${t('score')} ${o.score}</span><span>${o.score >= state.thr ? '≥' : '&lt;'}</span><span class="fchip amber">${t('threshold')} ${state.thr}</span><span>${arrow}</span><span class="fchip ${auto ? 'green' : 'amber'}">${!state.ap ? t('AutoPilot off · review') : (auto ? t('Auto-execute') : t('Flag for review'))}</span>`;
+}
+function bannerHTML(o) {
+  const d = state.done[o.id];
+  if (d === 'approve') return `<div class="banner ok">${I.checkc}<span><b>${t('Approved by Maren Köhler')} · ${now()}.</b> ${t(o.actions.approve)}</span></div>`;
+  if (d === 'escalate') return `<div class="banner esc">${I.alert}<span><b>${t('Escalated')} · ${now()}.</b> ${t(o.actions.escalate)}</span></div>`;
+  if (isAuto(o)) return `<div class="banner ok">${I.checkc}<span><b>${t('Auto-executed')}${o.autoAt ? ' · ' + t(o.autoAt) : ''}.</b> ${t(o.autoText)}. ${tf('Score {s} ≥ threshold {t}, no review needed.', {s:o.score, t:state.thr})}</span></div>`;
+  return `<div class="banner ask">${I.clock}<span><b>${t('Flagged for review.')}</b> ${tf('Score {s} is below the threshold of {t}. Nothing has been written to SAP yet.', {s:o.score, t:state.thr})}</span></div>`;
+}
+function actionsHTML(o) {
+  if (state.done[o.id]) return `<div class="o-actions"><button class="btn" data-act="toCockpit">${t('Back to cockpit')}</button></div>`;
+  if (state.editing) return `<div class="o-actions"><button class="btn primary" data-act="save">${t('Save & approve')}</button><button class="btn ghost" data-act="cancelEdit">${t('Cancel')}</button></div>`;
+  if (isAuto(o)) return `<div class="o-actions"><button class="btn primary" data-act="emails">${I.send}${t('Review drafted email')}</button><button class="btn" data-act="edit">${t('Edit')}</button><button class="btn ghost" data-act="sap">${t('View in SAP')}</button></div>`;
+  return `<div class="o-actions"><button class="btn primary" data-act="approve">${t('Approve & sync to SAP')}</button><button class="btn" data-act="edit">${t('Edit')}</button><button class="btn ghost" data-act="escalate">${t('Escalate')}</button></div>`;
+}
+function emailsHTML(o) {
+  return `<div class="emails">${o.emails.map((m, i) => {
+    const sentByUser = state.sent[o.id + ':' + i];
+    if (m.dir === 'out') {
+      const by = m.sentAt ? `${t('Sent by Jako')} · ${m.sentAt}` : (sentByUser ? `${t('Sent by Maren Köhler')} · ${sentByUser}` : `${t('Drafted by Jako')} · ${t(m.at)}`);
+      const isDraft = m.draft && !sentByUser;
+      return `<div class="em${isDraft ? ' draft' : ''}" data-i="${i}"><div class="eh"><span class="by"><span class="spark">✦</span>${by}</span>${isDraft ? `<span class="chip c-poconf">${t('Draft · waiting for you')}</span>` : `<span class="chip c-poupd">${t('Sent')}</span>`}</div><div class="meta"><b>${t('To')}</b><span>${m.to}</span><b>${t('Subject')}</b><span>${m.subject}</span></div><div class="ebody">${m.body.map(p => `<p>${p}</p>`).join('')}</div>${isDraft ? `<div class="ebtn"><button class="btn primary sm" data-send="${i}">${I.send}${t('Send')}</button><button class="btn sm" data-editmail="${i}">${t('Edit')}</button></div>` : ''}</div>`;
+    }
+    return `<div class="em" data-i="${i}"><div class="eh"><span class="by" style="color:var(--muted)">${I.mail}${t('Received')} · ${m.time}</span></div><div class="meta"><b>${t('From')}</b><span>${m.from}</span><b>${t('Subject')}</b><span>${m.subject}</span></div><div class="ebody">${m.body.map(p => `<p>${p}</p>`).join('')}</div>${m.attach ? `<div class="att">${I.file}${m.attach}</div>` : ''}</div>`;
+  }).join('')}</div>`;
+}
+function logHTML(o) {
+  const extra = (state.logExtra && state.logExtra[o.id]) || [];
+  return `<ul class="log">${[...o.log, ...extra].map(l => `<li class="${l[2]}"><span class="t">${t(l[0])}</span><span>${l[2] === 'user' ? `<b>${l[1]}</b>` : t(l[1])}</span></li>`).join('')}</ul>`;
+}
+function addLog(o, text) { state.logExtra = state.logExtra || {}; (state.logExtra[o.id] = state.logExtra[o.id] || []).push([now(), text, 'user']); }
+function openOrder(id, keep) {
+  const o = ORDERS[id]; if (!o) return;
+  if (!keep) { state.otab = 'details'; state.editing = false; }
+  state.order = id; state.view = 'order';
+  Object.entries(V).forEach(([k, s]) => s.hidden = k !== 'order');
+  $$('[data-nav]').forEach(a => a.classList.toggle('on', a.dataset.nav === 'orders'));
+  el.crumb.innerHTML = `${t('Orders')} <span>/</span> <span dir="ltr">${o.id}</span>`;
+  try { if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id); } catch (e) {}
+  const draftPending = o.emails.some((m, i) => m.dir === 'out' && m.draft && !state.sent[o.id + ':' + i]) && !state.done[o.id];
+  V.order.innerHTML = `
+    <div class="o-top">
+      <button class="back" data-act="back">${I.back}${t('Back')}</button>
+      <div><div class="o-id"><span dir="ltr">${o.id}</span><span class="chip c-${o.cat}">${t(o.chip)}</span></div><div class="o-sub">${o.party} · ${t('received')} <span dir="ltr">${o.received}</span> ${t('via')} ${o.via}</div></div>
+      ${draftPending ? `<button class="pill" data-act="emails"><span class="spark">✦</span>${t('Jako has drafted an email for you.')}</button>` : ''}
+    </div>
+    <div class="card">
+      <div class="tabs" style="margin-top:4px">${[['details','Order Details'],['emails','AI Emails'],['log','Activity Log']].map(x => `<button class="tab${state.otab === x[0] ? ' on' : ''}" data-otab="${x[0]}">${t(x[1])}</button>`).join('')}</div>
+      <div ${state.otab === 'details' ? '' : 'hidden'}>
+        <div class="ogrid">
+          <div>
+            <div class="form-h">${t(o.formTitle)}</div>
+            <div class="fgrid" id="fgrid">${o.fields.map(fieldHTML).join('')}</div>
+            <div class="form-h" style="margin-top:22px">${t(o.linesTitle)}${o.linesBadge ? `<span class="field ext" data-b="${o.linesBadge}" style="display:inline-block" tabindex="0"><span class="nb">${o.linesBadge}</span></span>` : ''}</div>
+            ${linesHTML(o)}
+            ${bannerHTML(o)}
+            ${actionsHTML(o)}
+          </div>
+          <div class="ocol">
+            <div class="card"><div class="doc-h"><span dir="auto" style="font-size:13px;color:var(--ink);font-weight:600">${t('Source')} · ${t(o.docFile)}</span><span>${t(o.docSub)}</span></div>${docHTML(o)}</div>
+            <div class="card">${confHTML(o)}</div>
+          </div>
+        </div>
+      </div>
+      <div ${state.otab === 'emails' ? '' : 'hidden'}>${emailsHTML(o)}</div>
+      <div ${state.otab === 'log' ? '' : 'hidden'}>${logHTML(o)}</div>
+    </div>`;
+  wireOrder(o);
+  if (!keep) window.scrollTo({top:0, behavior:'auto'});
+}
+V.order.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b || !state.order) return;
+  const o = ORDERS[state.order], root = V.order, a = b.dataset.act;
+  if (a === 'back') go(state.navKey === 'email' ? 'email' : 'orders');
+  else if (a === 'toCockpit') go('cockpit');
+  else if (a === 'emails') { state.otab = 'emails'; openOrder(o.id, true); }
+  else if (a === 'sap') toast(`<b>SAP S/4HANA.</b> ${t(o.autoText)} · ${t('document opened in a new window.')}`);
+  else if (a === 'approve') finish(o, 'approve');
+  else if (a === 'escalate') finish(o, 'escalate');
+  else if (a === 'edit') { state.editing = true; openOrder(o.id, true); const first = $('.inp input', root); if (first) { first.focus(); first.select(); } }
+  else if (a === 'cancelEdit') { state.editing = false; openOrder(o.id, true); }
+  else if (a === 'save') {
+    let changed = 0;
+    $$('.inp input', root).forEach(inp => { const i = +inp.dataset.i; if (inp.value.trim() && inp.value.trim() !== o.fields[i].v) { o.fields[i].v = inp.value.trim(); changed++; } });
+    state.editing = false;
+    if (changed) { toast(`<b>${t('Jako learned from your edit.')}</b> ${tf('{n} field(s) corrected · the pattern now applies to {p}.', {n:changed, p:o.party})}`); addLog(o, tf('Maren edited {n} field(s) · Jako learned the correction', {n:changed})); }
+    if (!isAuto(o) && !state.done[o.id]) finish(o, 'approve'); else openOrder(o.id, true);
+  }
+});
+function wireOrder(o) {
+  const root = V.order;
+  $$('[data-otab]', root).forEach(b => b.addEventListener('click', () => { state.otab = b.dataset.otab; openOrder(o.id, true); }));
+  if (state.editing) $$('.field.ext .val', root).forEach(v => { v.outerHTML = `<input data-i="${v.dataset.i}" value="${v.textContent.replace(/"/g, '&quot;')}" aria-label="${t('Edit')}">`; });
+  const fields = $$('.field.ext', root), boxes = $$('.hb', root);
+  const link = (b, on) => { fields.filter(f => f.dataset.b === b).forEach(f => f.classList.toggle('hi', on)); boxes.filter(x => x.dataset.b === b).forEach(x => x.classList.toggle('hi', on)); };
+  let openPop = null;
+  const hidePop = () => { if (openPop) { const p = $('.popover', openPop); if (p) p.remove(); openPop = null; } };
+  const showPop = f => { hidePop(); const i = f.dataset.i; const fd = i != null ? o.fields[+i] : null; const p = fd ? fd.pop : o.linesPop; if (!p) return; f.insertAdjacentHTML('beforeend', popHTML(p, fd && fd.warn)); openPop = f; };
+  fields.forEach(f => {
+    f.addEventListener('mouseenter', () => { if (!state.editing) showPop(f); link(f.dataset.b, true); });
+    f.addEventListener('mouseleave', () => { hidePop(); link(f.dataset.b, false); });
+    f.addEventListener('focus', () => { if (!state.editing) showPop(f); link(f.dataset.b, true); });
+    f.addEventListener('blur', () => { hidePop(); link(f.dataset.b, false); });
+    f.addEventListener('click', e => { if (state.editing || e.target.closest('.popover')) return; if (openPop === f) hidePop(); else showPop(f); });
+  });
+  boxes.forEach(x => {
+    x.addEventListener('mouseenter', () => link(x.dataset.b, true));
+    x.addEventListener('mouseleave', () => link(x.dataset.b, false));
+    x.addEventListener('click', () => { const f = fields.find(f => f.dataset.b === x.dataset.b); if (f) { f.scrollIntoView({behavior: reduced ? 'auto' : 'smooth', block:'center'}); showPop(f); link(x.dataset.b, true); setTimeout(() => link(x.dataset.b, false), 1400); } });
+  });
+  const range = $('#cfRange', root);
+  if (range) {
+    range.addEventListener('input', e => { state.thr = +e.target.value; $('#cfThr', root).textContent = state.thr; $('#cfThr2', root).textContent = state.thr; $('#formula', root).innerHTML = formulaHTML(o); });
+    range.addEventListener('change', () => openOrder(o.id, true));
+  }
+  $$('[data-send]', root).forEach(b => b.addEventListener('click', () => { const i = +b.dataset.send; state.sent[o.id + ':' + i] = tick(); toast(`<b>${tf('Sent to {to}.', {to:o.emails[i].to})}</b>`); addLog(o, tf('Maren sent the drafted email to {to}', {to:o.emails[i].to})); state.audit.unshift([now(), `${o.id} · ${tf('email sent to {to}', {to:o.emails[i].to})}`, who(), '—']); openOrder(o.id, true); }));
+  $$('[data-editmail]', root).forEach(b => b.addEventListener('click', () => { const em = b.closest('.em'), body = $('.ebody', em); body.contentEditable = 'true'; body.focus(); b.textContent = t('Editing · click Send when done'); b.disabled = true; }));
+}
+function finish(o, act) {
+  state.done[o.id] = act;
+  state.audit.unshift(auditLine(o, act));
+  addLog(o, `${t(act === 'approve' ? 'Maren approved' : 'Maren escalated')} · ${t(act === 'approve' ? o.actions.approve : o.actions.escalate)}`);
+  toast(`<b>${tf(act === 'approve' ? '{id} approved.' : '{id} escalated.', {id:o.id})}</b> ${t(act === 'approve' ? o.actions.approve : o.actions.escalate)}`);
+  openOrder(o.id, true);
+}
+
+/* ------------------------------------------------------------------ settings ------------------------------------------------------------------ */
+function renderSettings() {
+  V.settings.innerHTML = `<div class="set-grid">
+    <div class="card"><div class="card-h"><h1>${t('AutoPilot')}</h1></div><div class="card-pad" style="padding-top:10px">
+      <div class="set-row"><div>${t('AutoPilot')}<small>${t('Transactions above the threshold run without review')}</small></div><button class="switch${state.ap ? ' on' : ''}" id="setAp" role="switch" aria-checked="${state.ap}" aria-label="${t('AutoPilot')}"><i></i></button></div>
+      <div class="set-row" style="display:block"><div style="display:flex;justify-content:space-between"><span>${t('Autopilot threshold')}</span><b id="setThrV">${state.thr}</b></div><input type="range" id="setThr" min="50" max="99" value="${state.thr}" style="width:100%;accent-color:var(--primary);margin-top:10px" aria-label="${t('Autopilot threshold')}">
+        <div class="bands"><span class="fchip green">${tf('≥ {t} · Auto-execute', {t:state.thr})}</span><span class="fchip amber">${tf('50–{t} · Flag for review', {t:state.thr - 1})}</span><span class="fchip rose">${t('< 50 · Escalate').replace('<', '&lt;')}</span></div></div>
+      <div class="set-row"><div>${t('Customer-facing emails')}<small>${t('Jako drafts, a person sends')}</small></div><button class="switch on" role="switch" aria-checked="true" aria-label="${t('Customer-facing emails')}"><i></i></button></div>
+      <div class="set-row"><div>${t('Supplier emails')}<small>${t('Sent automatically above the threshold')}</small></div><button class="switch on" role="switch" aria-checked="true" aria-label="${t('Supplier emails')}"><i></i></button></div>
+      <div class="set-row"><div>${t('Learn from edits')}<small>${t('Every correction becomes a rule for that counterparty')}</small></div><button class="switch on" role="switch" aria-checked="true" aria-label="${t('Learn from edits')}"><i></i></button></div>
+    </div></div>
+    <div class="card"><div class="card-h"><h1>${t('Connections')}</h1></div><div class="card-pad" style="padding-top:10px">
+      ${[['erp','SAP S/4HANA','2110'],['inbox','Outlook','einkauf@, rechnungen@, orders@'],['inbox','Gmail','ordini@nordwerk-industrial.it'],['edi','EDI (AS2)','ORDERS, ORDRSP, DESADV, INVOIC'],['teams','Microsoft Teams','Procurement, Finance'],['suppliers','Supplier portals','Voss Logistik, Bavaria Fastener']].map(c => `<div class="conn">${I[c[0]]}<div>${t(c[1])}<small style="display:block;color:var(--muted);font-size:12px" dir="ltr">${c[2]}</small></div><span><i class="dot"></i>${t('Connected')}</span></div>`).join('')}
+    </div></div>
+  </div>`;
+  $('#setAp', V.settings).addEventListener('click', () => setAp(!state.ap));
+  const r = $('#setThr', V.settings);
+  r.addEventListener('input', e => { state.thr = +e.target.value; $('#setThrV', V.settings).textContent = state.thr; });
+  r.addEventListener('change', renderSettings);
+}
+
+/* ------------------------------------------------------------------ boot ------------------------------------------------------------------ */
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSide(); const p = $('#catPop'); if (p) p.hidden = true; } });
+applyLang();
+go(location.hash.slice(1) || 'cockpit');
+})();
+</script>
+
+</body></html>
